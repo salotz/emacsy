@@ -1,6 +1,7 @@
 ;;; Emacsy --- An embeddable Emacs-like library using GNU Guile
 ;;;
 ;;; Copyright (C) 2012, 2013 Shane Celis <shane.celis@gmail.com>
+;;; Copyright (C) 2019 by Amar Singh<nly@disroot.org>
 ;;;
 ;;; This file is part of Emacsy.
 ;;;
@@ -19,6 +20,9 @@
 
 ;;; Commentary:
 
+;;; FIXME: introduced a test regression, now test/minibuffer.scm is
+;;; failing.
+
 ;; @node Mru-stack
 ;; @subsection Mru-stack
 
@@ -28,9 +32,10 @@
 ;;; Code:
 
 (define-module (emacsy mru-stack)
-  #:use-module (ice-9 q)
   #:use-module (oop goops)
   #:use-module (emacsy util)
+  #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-26)
   #:export (<mru-stack>
             mru-add!
             mru-remove!
@@ -43,34 +48,45 @@
             mru-prev!
             mru-list))
 
-;;.
+;;; mru-stack used these from Q: make-q q-push! q-remove! q-empty?
+;;; let's define those first
+
+;;; first in last out
+(define make-q list)
+
+;;; reverse the order of args in cons
+(define q-push xcons)
+
+;;; remove all occurences of item
+(define (q-remove q item)
+  (filter (compose not (cut equal? <> item)) q))
+
+(define q-empty? null-list?)
+
+;;; onwards to mru part of the puzzle
 (define-class <mru-stack> ()
   (queue #:accessor q #:init-thunk (lambda () (make-q)))
   (index #:accessor index #:init-value 0))
 
 (define-method (write (obj <mru-stack>) port)
-;  (write (string-concatenate (list "#<mru-stack '" (buffer-name obj) "'>")) port)
   (format port "<mru-stack ~a>" (mru-list obj)))
 
-;;.
 (define-method (mru-add! (s <mru-stack>) x)
-  (q-push! (q s) x))
+  (set! (q s) (q-push (q s) x))
+  (q s))
 
-;;.
-(define-method (mru-remove! (s <mru-stack>) x)
-  (let ((orig-x (mru-ref s)))
-    (q-remove! (q s) x)
-    (if (not (eq? orig-x x))
-        (mru-set! s orig-x))))
+(define-method (mru-remove! (s <mru-stack>) item)
+  (let ((old-item (mru-ref s)))
+    (set! (q s) (q-remove (q s) item))
+    (unless (eq? old-item item)
+      (mru-set! s old-item))))
 
-;;.
-(define-method (mru-recall! (s <mru-stack>) x)
-  (q-remove! (q s) x)
-  (q-push! (q s) x)
+;;; note: easily the most important proc
+(define-method (mru-recall! (s <mru-stack>) item)
   (set! (index s) 0)
+  (set! (q s) (q-push (q-remove (q s) item) item))
   (mru-list s))
 
-;;.
 (define-method (mru-set! (s <mru-stack>) x)
   ;; Should this add the buffer if it's not already there? No.
   (if (mru-empty? s)
@@ -89,7 +105,7 @@
 
 ;;.
 (define-method (mru-list (s <mru-stack>))
-  (car (q s)))
+  (q s))
 
 ;;.
 (define-method (mru-empty? (s <mru-stack>))
