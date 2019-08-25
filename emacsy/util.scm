@@ -25,7 +25,8 @@
   #:use-module (debugging assert)
   #:use-module (system repl error-handling)
   ;#:export-syntax (define-syntax-public)
-)
+  #:export (define-method*)
+  )
 ;;; <util:state>=
 ;; I want to get rid of this state if I can.
 (define-public continue-command-loop? (make-unbound-fluid))
@@ -312,3 +313,16 @@ second argument."
 (define-public (emacsy-log-warning format-msg . args)
   (apply format (current-error-port) format-msg args)
   (newline (current-error-port)))
+
+;;; Thanks, Daviid
+(define-syntax define-method*
+  (lambda (x)
+    (syntax-case x ()
+      ((_ (generic arg-spec ... . tail) body ...)
+       (receive (required-arg-specs other-arg-specs)
+           (break (compose keyword? syntax->datum)
+                  #'(arg-spec ...))
+         #`(define-method (generic #,@required-arg-specs . rest)
+             (apply (lambda* (#,@other-arg-specs . tail)
+                      body ...)
+                    rest)))))))

@@ -117,21 +117,12 @@
 
 ;; The order of the elements may not change yet the index may be moved
 ;; around.
-(define-method (mru-next! (s <mru-stack>) count)
-  (when (not (mru-empty?  s))
+(define-method* (mru-next! (s <mru-stack>) #:optional (count 1))
+  (unless (mru-empty?  s)
    (set! (index s)
          (modulo (+ (index s) count)
                  (length (mru-list s))))
    (mru-ref s)))
 
-;;.
-(define-method (mru-prev! (s <mru-stack>) count)
+(define-method* (mru-prev! (s <mru-stack>) #:optional (count 1))
   (mru-next! s (- count)))
-
-;;.
-(define-method (mru-prev! (s <mru-stack>))
-  (mru-prev! s 1))
-
-;;.
-(define-method (mru-next! (s <mru-stack>))
-  (mru-next! s 1))
