@@ -65,8 +65,7 @@
 
 ;;; onwards to mru part of the puzzle
 (define-class <mru-stack> ()
-  (queue #:accessor q #:init-thunk (lambda () (make-q)))
-  (index #:accessor index #:init-value 0))
+  (queue #:accessor q #:init-thunk (lambda () (make-q))))
 
 (define-method (write (obj <mru-stack>) port)
   (format port "<mru-stack ~a>" (mru-list obj)))
@@ -83,7 +82,6 @@
 
 ;;; note: easily the most important proc
 (define-method (mru-recall! (s <mru-stack>) item)
-  (set! (index s) 0)
   (set! (q s) (q-push (q-remove (q s) item) item))
   (mru-list s))
 
@@ -93,7 +91,7 @@
       #f
       (let ((i (member-ref x (mru-list s))))
         (if i
-            (begin (set! (index s) i)
+            (begin (mru-recall! s x)
                    #t)
             (begin (mru-next! s)
                    #f)))))
@@ -101,7 +99,7 @@
 ;;.
 (define-method (mru-ref (s <mru-stack>))
   (and (not (mru-empty? s))
-       (list-ref (mru-list s) (index s))))
+       (car (mru-list s))))
 
 ;;.
 (define-method (mru-list (s <mru-stack>))
@@ -117,12 +115,26 @@
 
 ;; The order of the elements may not change yet the index may be moved
 ;; around.
+(define-public (circular-list->list q)
+  (define (clst->list* start q)
+    (if (eq? start (car q))
+        '()
+        (cons (car q) (clst->list* start (cdr q)))))
+  (cons (car q) (clst->list* (car q) (cdr q))))
+
+(define (mru-next clst count)
+    (if (not (positive? count))
+        clst
+        (mru-next (cdr clst) (1- count))))
+
 (define-method* (mru-next! (s <mru-stack>) #:optional (count 1))
-  (unless (mru-empty?  s)
-   (set! (index s)
-         (modulo (+ (index s) count)
-                 (length (mru-list s))))
-   (mru-ref s)))
+  (unless (mru-empty? s)
+    (let ((msc (apply circular-list (mru-list s))))
+      (set! (q s) (circular-list->list (mru-next msc count))))
+    (mru-ref s)))
 
 (define-method* (mru-prev! (s <mru-stack>) #:optional (count 1))
-  (mru-next! s (- count)))
+  (unless (mru-empty? s)
+    (let ((msc (apply circular-list (reverse (mru-list s)))))
+      (set! (q s) (reverse (circular-list->list (mru-next msc count)))))
+    (mru-ref s)))
