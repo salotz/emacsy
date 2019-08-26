@@ -113,8 +113,6 @@
 (define-method (mru-contains? (s <mru-stack>) x)
   (memq x (mru-list s)))
 
-;; The order of the elements may not change yet the index may be moved
-;; around.
 (define-public (circular-list->list q)
   (define (clst->list* start q)
     (if (eq? start (car q))
@@ -127,6 +125,7 @@
         clst
         (mru-next (cdr clst) (1- count))))
 
+;;; FIXME: performance can be gained by defining (encylce! lst) -> circular-list
 (define-method* (mru-next! (s <mru-stack>) #:optional (count 1))
   (unless (mru-empty? s)
     (let ((msc (apply circular-list (mru-list s))))
