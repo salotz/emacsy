@@ -48,26 +48,10 @@
             mru-prev
             mru->list))
 
-;;; mru-stack used these from Q: make-q q-push! q-remove! q-empty?
-;;; let's define those first
-
-;;; first in last out
-(define make-q list)
-
-;;; reverse the order of args in cons
-(define q-push xcons)
-
-;;; remove all occurences of item
-(define (q-remove q item)
-  (delq item q))
-
-(define q-empty? null-list?)
-
-;;; onwards to mru part of the puzzle
 (define-class <mru-stack> ()
   (queue #:accessor q
          #:init-keyword #:q
-         #:init-thunk (lambda () (make-q))))
+         #:init-thunk (lambda () (list))))
 
 (define-method (write (obj <mru-stack>) port)
   (format port "<mru-stack ~a>" (mru->list obj)))
@@ -75,10 +59,10 @@
 ;;; mru is quite effectful, this might become an issue. make composable
 ;;; alternatives to mru-X! -> mru-X
 (define-method (mru-add (s <mru-stack>) x)
-  (make <mru-stack> #:q (q-push (q s) x)))
+  (make <mru-stack> #:q (xcons (q s) x)))
 
 (define-method (mru-remove (s <mru-stack>) item)
-  (make <mru-stack> #:q (q-remove (q s) item)))
+  (make <mru-stack> #:q (delq item (q s))))
 
 ;;; note: easily the most important proc
 (define-method (mru-recall (s <mru-stack>) item)
@@ -97,7 +81,7 @@
 
 ;;.
 (define-method (mru-empty? (s <mru-stack>))
-  (q-empty? (q s)))
+  (null-list? (q s)))
 
 ;;.
 (define-method (mru-contains? (s <mru-stack>) x)
