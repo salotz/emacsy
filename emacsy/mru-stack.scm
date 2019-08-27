@@ -101,7 +101,7 @@
 
 ;;.
 (define-method (mru-contains? (s <mru-stack>) x)
-  (memq x (mru-list s)))
+  (list-index (cut eq? <> x) (mru->list s)))
 
 (define-public (circular-list->list q)
   (define (clst->list* start q)
