@@ -59,7 +59,7 @@
 
 ;;; remove all occurences of item
 (define (q-remove q item)
-  (filter (compose not (cut equal? <> item)) q))
+  (delq item q))
 
 (define q-empty? null-list?)
 
