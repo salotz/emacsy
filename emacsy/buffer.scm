@@ -59,6 +59,9 @@
 
 ;;; Commentary:
 
+;;; buffer uses form mru-stack: <mru-stack> mru-list mru-ref mru-add!
+;;; mru-remove! mru-next! mru-set! mru-recall! mru-contains?
+
 ;; @node Buffer
 ;; @section Buffer
 

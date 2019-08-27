@@ -37,16 +37,16 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:export (<mru-stack>
-            mru-add!
-            mru-remove!
-            mru-recall!
-            mru-set!
+            mru-add
+            mru-remove
+            mru-recall
+            mru-set
             mru-ref
             mru-empty?
             mru-contains?
-            mru-next!
-            mru-prev!
-            mru-list))
+            mru-next
+            mru-prev
+            mru->list))
 
 ;;; mru-stack used these from Q: make-q q-push! q-remove! q-empty?
 ;;; let's define those first
@@ -65,44 +65,34 @@
 
 ;;; onwards to mru part of the puzzle
 (define-class <mru-stack> ()
-  (queue #:accessor q #:init-thunk (lambda () (make-q))))
+  (queue #:accessor q
+         #:init-keyword #:q
+         #:init-thunk (lambda () (make-q))))
 
 (define-method (write (obj <mru-stack>) port)
-  (format port "<mru-stack ~a>" (mru-list obj)))
+  (format port "<mru-stack ~a>" (mru->list obj)))
 
-(define-method (mru-add! (s <mru-stack>) x)
-  (set! (q s) (q-push (q s) x))
-  (q s))
+;;; mru is quite effectful, this might become an issue. make composable
+;;; alternatives to mru-X! -> mru-X
+(define-method (mru-add (s <mru-stack>) x)
+  (make <mru-stack> #:q (q-push (q s) x)))
 
-(define-method (mru-remove! (s <mru-stack>) item)
-  (let ((old-item (mru-ref s)))
-    (set! (q s) (q-remove (q s) item))
-    (unless (eq? old-item item)
-      (mru-set! s old-item))))
+(define-method (mru-remove (s <mru-stack>) item)
+  (make <mru-stack> #:q (q-remove (q s) item)))
 
 ;;; note: easily the most important proc
-(define-method (mru-recall! (s <mru-stack>) item)
-  (set! (q s) (q-push (q-remove (q s) item) item))
-  (mru-list s))
+(define-method (mru-recall (s <mru-stack>) item)
+   (mru-add (mru-remove s item) item))
 
-(define-method (mru-set! (s <mru-stack>) x)
-  ;; Should this add the buffer if it's not already there? No.
-  (if (mru-empty? s)
-      #f
-      (let ((i (member-ref x (mru-list s))))
-        (if i
-            (begin (mru-recall! s x)
-                   #t)
-            (begin (mru-next! s)
-                   #f)))))
+(define mru-set mru-recall)
 
 ;;.
-(define-method (mru-ref (s <mru-stack>))
-  (and (not (mru-empty? s))
-       (car (mru-list s))))
+(define-method* (mru-ref (s <mru-stack>) #:optional (ref 1))
+  (unless (mru-empty? s)
+       (list-ref (mru->list s) ref)))
 
 ;;.
-(define-method (mru-list (s <mru-stack>))
+(define-method (mru->list (s <mru-stack>))
   (q s))
 
 ;;.
@@ -120,20 +110,15 @@
         (cons (car q) (clst->list* start (cdr q)))))
   (cons (car q) (clst->list* (car q) (cdr q))))
 
-(define (mru-next clst count)
-    (if (not (positive? count))
-        clst
-        (mru-next (cdr clst) (1- count))))
-
 ;;; FIXME: performance can be gained by defining (encylce! lst) -> circular-list
-(define-method* (mru-next! (s <mru-stack>) #:optional (count 1))
+(define-method* (mru-next (s <mru-stack>) #:optional (count 1))
   (unless (mru-empty? s)
-    (let ((msc (apply circular-list (mru-list s))))
-      (set! (q s) (circular-list->list (mru-next msc count))))
-    (mru-ref s)))
+    (make <mru-stack>
+      #:q (circular-list->list (drop (apply circular-list
+                                            (mru->list s))
+                                     count)))))
 
-(define-method* (mru-prev! (s <mru-stack>) #:optional (count 1))
-  (unless (mru-empty? s)
-    (let ((msc (apply circular-list (reverse (mru-list s)))))
-      (set! (q s) (reverse (circular-list->list (mru-next msc count)))))
-    (mru-ref s)))
+(define-method* (mru-prev (s <mru-stack>) #:optional (count 1))
+  (make <mru-stack>
+    #:q (reverse (mru->list (mru-next (make <mru-stack>
+                                        #:q (reverse (mru->list s))) count)))))
