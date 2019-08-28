@@ -123,7 +123,7 @@
 
 ;;; buffers are used by text.scm, introspection.scm, minibuffer.scm, emacsy.scm, core.scm
 (define-class <buffer> ()
-  (name #:init-keyword #:name)
+  (name #:init-keyword #:name #:init-value "")
   (file-name #:accessor buffer-file-name #:init-form #f #:init-keyword #:buffer-file-name)
   (keymap #:accessor local-keymap #:init-keyword #:keymap #:init-form (make-keymap))
   (locals #:accessor local-variables #:init-form '())
