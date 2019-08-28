@@ -48,6 +48,10 @@
             mru-prev
             mru->list))
 
+(define return-on-failure #f)
+(define list-beginning 0)
+(define increment 1)
+
 (define-class <mru-stack> ()
   (queue #:accessor q
          #:init-keyword #:q
@@ -66,13 +70,14 @@
 
 ;;; note: easily the most important proc
 (define-method (mru-recall (s <mru-stack>) item)
-   (mru-add (mru-remove s item) item))
+  (if (not (mru-contains? s item)) return-on-failure
+      (mru-add (mru-remove s item) item)))
 
 (define mru-set mru-recall)
 
 ;;.
-(define-method* (mru-ref (s <mru-stack>) #:optional (ref 0))
-  (if (mru-empty? s) #f
+(define-method* (mru-ref (s <mru-stack>) #:optional (ref list-beginning))
+  (if (mru-empty? s) return-on-failure
        (list-ref (mru->list s) ref)))
 
 ;;.
@@ -95,8 +100,8 @@
   (cons (car q) (clst->list* (car q) (cdr q))))
 
 ;;; FIXME: performance can be gained by defining (encylce! lst) -> circular-list
-(define-method* (mru-next (s <mru-stack>) #:optional (count 1))
-  (if (mru-empty? s) #f
+(define-method* (mru-next (s <mru-stack>) #:optional (count increment))
+  (if (mru-empty? s) return-on-failure
       (make <mru-stack>
         #:q (let ((proc (if (negative? count) reverse identity))
                   (count (if (negative? count) (- count) count)))
@@ -104,5 +109,5 @@
                                                       (proc (mru->list s)))
                                                count)))))))
 
-(define-method* (mru-prev (s <mru-stack>) #:optional (count 1))
+(define-method* (mru-prev (s <mru-stack>) #:optional (count increment))
   (mru-next s (- count)))
