@@ -108,6 +108,7 @@
           (set-buffer! old-buffer)
           (goto-char old-point)))))))
 
+;;; buffers are used by text.scm, introspection.scm, minibuffer.scm, emacsy.scm, core.scm
 ;;.
 (define-class <buffer> ()
   (name #:init-keyword #:name)
