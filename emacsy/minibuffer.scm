@@ -223,7 +223,7 @@ available. Otherwise returns default-ticks."
       (if canceled?
           (begin
             (if (eq? (current-buffer) minibuffer)
-                (switch-to-buffer last-buffer))
+                (switch-to-buffer (cadr (buffer-list))))
             (throw 'quit-command 'quit-read-from-minibuffer))
           (begin
             (history-set! minibuffer-history (minibuffer-contents))
@@ -540,7 +540,7 @@ available. Otherwise returns default-ticks."
 ;;.
 (define-interactive (exit-minibuffer)
   (set! minibuffer-reading? #f)
-  (switch-to-buffer last-buffer))
+  (switch-to-buffer (cadr (buffer-list))))
 
 (define reset-completion #f)
 ;;.
