@@ -36,12 +36,12 @@
 (define b (make <buffer> #:name "*test-buffer*"))
 (check (buffer-name b) => "*test-buffer*")
 (check (object->string b) => "#<buffer *test-buffer*>")
-(check (current-buffer) => #f)
+(check (current-buffer) => void-buffer)
 ;;; <buffer:test>=
 (add-buffer! b)
 (check (buffer-name) => "*test-buffer*")
 (remove-buffer! b)
-(check (current-buffer) => #f)
+(check (current-buffer) => void-buffer)
 
 (add-buffer! b)
 (warn 'buffer-list (buffer-list))

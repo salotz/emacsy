@@ -30,7 +30,7 @@
 (use-private-modules (emacsy minibuffer))
 
 (set! emacsy-interactive? #t)
-(set! aux-buffer minibuffer)
+(define aux-buffer minibuffer)
 
 ;;; <+ Test Preamble>=
 (use-modules (check))
