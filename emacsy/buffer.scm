@@ -54,8 +54,6 @@
             with-buffer
             save-excursion
             buffer-stack
-            last-buffer
-            aux-buffer
             buffer-name
             buffer-name
             set-buffer-name!
@@ -146,12 +144,6 @@
 ;;; global variable; here we go.
 (define buffer-stack (make <mru-stack>))
 
-;;; Mixing #f with buffer type. Nice!
-(define last-buffer #f)
-
-;;; Don't rely on Mru. Break the abstraction barrier, I'm game!
-(define aux-buffer #f)
-
 ;;; Can already see the fruits of the labor!
 ;; Buffer's have a name, and there is always a current buffer or it's
 ;; false.  Note that methods do not work as easily with optional
@@ -171,7 +163,7 @@
 
 (define-method (write (obj <buffer>) port)
   (format port "#<buffer ~a>" (buffer-name obj)))
-
+(export void-buffer)
 ;; @c @node
 ;; @subsection Emacs Compatibility
 
@@ -184,11 +176,13 @@
 (define (buffer-list)
   (mru->list buffer-stack))
 
+(define void-buffer (make <buffer>))
+
 (define (current-buffer)
   ;; Perhaps instead of returning #f for no buffer there should be an
   ;; immutable void-buffer class.
-  (or aux-buffer
-      (mru-ref buffer-stack)))
+  (or (mru-ref buffer-stack)
+      void-buffer))
 
 (define (add-buffer! buffer)
   (set! buffer-stack (mru-add buffer-stack buffer)))
@@ -212,9 +206,7 @@
 (define (set-buffer! buffer)
   ;;(emacsy-log-debug "set-buffer! to ~a" buffer)
   (if (mru-contains? buffer-stack buffer)
-      (begin (set! buffer-stack (mru-recall buffer-stack buffer))
-             (set! aux-buffer #f))
-      (set! aux-buffer buffer)))
+      (set! buffer-stack (mru-recall buffer-stack buffer))))
 
 ;; This is scary, we will override it when we have <text-buffer>.
 (define-interactive (kill-buffer #:optional (buffer (current-buffer)))
@@ -236,12 +228,10 @@
 (define* (primitive-switch-to-buffer buffer #:optional (recall? #t))
   (emacsy-log-debug "Running exit hook for ~a" (current-buffer))
   (run-hook (buffer-exit-hook (current-buffer)))
-  (set! last-buffer (current-buffer))
   (if recall?
       (begin
         (emacsy-log-debug "Recall buffer ~a" buffer)
-        (set-buffer! buffer)
-        (set! aux-buffer #f))
+        (set-buffer! buffer))
       (begin
         (emacsy-log-debug "Add buffer ~a" buffer)
         (add-buffer! buffer)))
