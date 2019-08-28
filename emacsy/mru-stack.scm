@@ -70,8 +70,7 @@
 
 ;;; note: easily the most important proc
 (define-method (mru-recall (s <mru-stack>) item)
-  (if (not (mru-contains? s item)) return-on-failure
-      (mru-add (mru-remove s item) item)))
+  (mru-add (mru-remove s item) item))
 
 (define mru-set mru-recall)
 
