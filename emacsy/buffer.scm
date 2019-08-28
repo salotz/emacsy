@@ -96,7 +96,6 @@
 ;; @defmac with-buffer @dots{}
 ;; A convenience macro to work with a given buffer.
 ;; @end defmac
-;;.
 (define-syntax with-buffer
   (syntax-rules ()
     ((with-buffer buffer e ...)
@@ -110,7 +109,6 @@
 ;; @defmac save-excursion @dots{}
 ;; A convenience macro to do some work
 ;; @end defmac
-;;.
 (define-syntax save-excursion
   (syntax-rules ()
     ((save-excursion body ...)
@@ -124,7 +122,6 @@
           (goto-char old-point)))))))
 
 ;;; buffers are used by text.scm, introspection.scm, minibuffer.scm, emacsy.scm, core.scm
-;;.
 (define-class <buffer> ()
   (name #:init-keyword #:name)
   (file-name #:accessor buffer-file-name #:init-form #f #:init-keyword #:buffer-file-name)
@@ -137,26 +134,21 @@
   (buffer-kill-hook #:accessor buffer-kill-hook #:init-form (make-hook 0))
   (buffer-modes #:accessor buffer-modes #:init-form '() #:init-keyword #:buffer-modes))
 
-;;.
 (define-variable before-buffer-change-hook (make-hook 1)
   "This hook is called prior to the buffer being changed with one argument, the buffer.")
 
-;;.
 (define-variable after-buffer-change-hook (make-hook 1)
   "This hook is called after to the buffer has changed with one argument, the buffer.")
 
 ;;; The buffer module also keeps track of the live buffers and the current
 ;;; one.
 
-;;.
 ;;; global variable; here we go.
 (define buffer-stack (make <mru-stack>))
 
-;;.
 ;;; Mixing #f with buffer type. Nice!
 (define last-buffer #f)
 
-;;.
 ;;; Don't rely on Mru. Break the abstraction barrier, I'm game!
 (define aux-buffer #f)
 
@@ -172,53 +164,42 @@
 (define-method (buffer-name (buffer <buffer>))
   (slot-ref buffer 'name))
 
-;;.
 (define-method (set-buffer-name! name)
   (set-buffer-name! name (current-buffer)))
 
-;;.
 (define-method (set-buffer-name! name (buffer <buffer>))
   (slot-set! buffer 'name name))
 
-;;.
 (define-method (buffer-modified?)
   (buffer-modified? (current-buffer)))
 
-;;.
 (define-method (buffer-modified-tick)
   (buffer-modified-tick (current-buffer)))
 
-;;.
 (define-method (write (obj <buffer>) port)
   (format port "#<buffer ~a>" (buffer-name obj)))
 
 ;; @c @node
 ;; @subsection Emacs Compatibility
 
-;;.
 (define (current-local-map)
   (local-keymap (current-buffer)))
 
-;;.
 (define (use-local-map keymap)
   (set! (local-keymap (current-buffer)) keymap))
 
-;;.
 (define (buffer-list)
   (mru->list buffer-stack))
 
-;;.
 (define (current-buffer)
   ;; Perhaps instead of returning #f for no buffer there should be an
   ;; immutable void-buffer class.
   (or aux-buffer
       (mru-ref buffer-stack)))
 
-;;.
 (define (add-buffer! buffer)
   (set! buffer-stack (mru-add buffer-stack buffer)))
 
-;;.
 (define (remove-buffer! buffer)
   (set! buffer-stack (mru-remove buffer-stack buffer)))
 
@@ -228,16 +209,13 @@
 (define* (buffer-next! #:optional (incr 1))
   (buffer-previous! (- incr)))
 
-;;.
 (define-interactive (next-buffer #:optional (incr 1))
   (buffer-next! incr)
   (switch-to-buffer (mru-ref buffer-stack)))
 
-;;.
 (define-interactive (prev-buffer #:optional (incr 1))
   (next-buffer (- incr)))
 
-;;.
 (define (set-buffer! buffer)
   ;;(emacsy-log-debug "set-buffer! to ~a" buffer)
   (if (mru-contains? buffer-stack buffer)
@@ -246,11 +224,9 @@
       (set! aux-buffer buffer)))
 
 ;; This is scary, we will override it when we have <text-buffer>.
-;;.
 (define-interactive (kill-buffer #:optional (buffer (current-buffer)))
   (remove-buffer! buffer))
 
-;;.
 (define* (other-buffer! #:optional (incr 1))
   (set! buffer-stack
         (mru-recall buffer-stack
@@ -280,10 +256,8 @@
   (run-hook (buffer-enter-hook (current-buffer)))
   (current-buffer))
 
-;;.
 (define switch-to-buffer primitive-switch-to-buffer)
 
-;;.
 (define (local-var-ref symbol)
   (let ((result (assq symbol (local-variables (current-buffer)))))
     (if (pair? result)
@@ -294,17 +268,14 @@
 ;; If buffers were in their own modules I could dynamically add variables
 ;; to their namespace.  Interesting idea.
 
-;;.
 (define (local-var-set! symbol value)
   (slot-set! (current-buffer)
              'locals
              (assq-set! (local-variables (current-buffer)) symbol value)))
 
-;;.
 (define local-var
                (make-procedure-with-setter local-var-ref local-var-set!))
 
-;;.
 ;; method
 (define-method (emacsy-mode-line)
   (emacsy-mode-line (current-buffer)))
