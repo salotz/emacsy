@@ -30,14 +30,29 @@
   #:use-module (emacsy command)
   #:use-module (emacsy klecl)
   #:use-module (emacsy mode)
-  #:export (next-buffer
+  #:export (<buffer>
+            ;; accessors
+            after-change-hook
+            before-change-hook
+            buffer-enter-hook
+            buffer-exit-hook
+            buffer-file-name
+            buffer-kill-hook
+            buffer-modes
+            buffer-modified-tick
+            local-keymap
+            local-variables
+            ;; variables
+            after-buffer-change-hook
+            before-buffer-change-hook
+            ;; procs
+            next-buffer
             prev-buffer
             buffer-previous!
             buffer-next!
             other-buffer!
             with-buffer
             save-excursion
-            <buffer>
             buffer-stack
             last-buffer
             aux-buffer
@@ -121,13 +136,14 @@
   (buffer-exit-hook #:accessor buffer-exit-hook #:init-form (make-hook 0))
   (buffer-kill-hook #:accessor buffer-kill-hook #:init-form (make-hook 0))
   (buffer-modes #:accessor buffer-modes #:init-form '() #:init-keyword #:buffer-modes))
-(export local-keymap local-variables buffer-file-name buffer-enter-hook buffer-exit-hook buffer-kill-hook before-buffer-change-hook after-buffer-change-hook after-change-hook before-change-hook buffer-modified-tick buffer-modes)
 
 ;;.
-(define-variable before-buffer-change-hook (make-hook 1) "This hook is called prior to the buffer being changed with one argument, the buffer.")
+(define-variable before-buffer-change-hook (make-hook 1)
+  "This hook is called prior to the buffer being changed with one argument, the buffer.")
 
 ;;.
-(define-variable after-buffer-change-hook (make-hook 1) "This hook is called after to the buffer has changed with one argument, the buffer.")
+(define-variable after-buffer-change-hook (make-hook 1)
+  "This hook is called after to the buffer has changed with one argument, the buffer.")
 
 ;;; The buffer module also keeps track of the live buffers and the current
 ;;; one.
