@@ -75,20 +75,16 @@
 
 (define mru-set mru-recall)
 
-;;.
 (define-method* (mru-ref (s <mru-stack>) #:optional (ref list-beginning))
   (if (mru-empty? s) return-on-failure
        (list-ref (mru->list s) ref)))
 
-;;.
 (define-method (mru->list (s <mru-stack>))
   (q s))
 
-;;.
 (define-method (mru-empty? (s <mru-stack>))
   (null-list? (q s)))
 
-;;.
 (define-method (mru-contains? (s <mru-stack>) x)
   (list-index (cut eq? <> x) (mru->list s)))
 
