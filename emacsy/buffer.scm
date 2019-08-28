@@ -184,7 +184,7 @@
 
 ;;.
 (define (buffer-list)
-  (mru-list buffer-stack))
+  (mru->list buffer-stack))
 
 ;;.
 (define (current-buffer)
@@ -195,14 +195,14 @@
 
 ;;.
 (define (add-buffer! buffer)
-  (mru-add! buffer-stack buffer))
+  (set! buffer-stack (mru-add buffer-stack buffer)))
 
 ;;.
 (define (remove-buffer! buffer)
-  (mru-remove! buffer-stack buffer))
+  (set! buffer-stack (mru-remove buffer-stack buffer)))
 
 (define* (buffer-previous! #:optional (incr 1))
-  (mru-next! buffer-stack incr))
+  (set! buffer-stack (mru-next buffer-stack incr)))
 
 (define* (buffer-next! #:optional (incr 1))
   (buffer-previous! (- incr)))
@@ -219,8 +219,9 @@
 ;;.
 (define (set-buffer! buffer)
   ;;(emacsy-log-debug "set-buffer! to ~a" buffer)
-  (if (mru-set! buffer-stack buffer)
-      (set! aux-buffer #f)
+  (if (mru-contains? buffer-stack buffer)
+      (begin (set! buffer-stack (mru-recall buffer-stack buffer))
+             (set! aux-buffer #f))
       (set! aux-buffer buffer)))
 
 ;; This is scary, we will override it when we have <text-buffer>.
@@ -230,31 +231,30 @@
 
 ;;.
 (define* (other-buffer! #:optional (incr 1))
-  (buffer-previous! incr)
-  (when (mru-contains? buffer-stack (current-buffer))
-    (mru-recall! buffer-stack (current-buffer)))
+  (set! buffer-stack
+        (mru-recall buffer-stack
+                    (list-ref (buffer-list) incr)))
   (current-buffer))
 
 (define-interactive (other-buffer #:optional (count 1))
-  (buffer-previous! count)
-  (switch-to-buffer (mru-ref buffer-stack)) #t)
+  (switch-to-buffer (other-buffer! count))
+  #t)
 
 
 ;;; This is our primitive procedure for switching buffers.  It does not
 ;;; handle any user interaction.
-(define* (primitive-switch-to-buffer buffer #:optional recall?)
+(define* (primitive-switch-to-buffer buffer #:optional (recall? #t))
   (emacsy-log-debug "Running exit hook for ~a" (current-buffer))
   (run-hook (buffer-exit-hook (current-buffer)))
   (set! last-buffer (current-buffer))
-  (if (and recall?
-           (mru-contains? buffer-stack buffer))
+  (if recall?
       (begin
         (emacsy-log-debug "Recall buffer ~a" buffer)
-        (when recall? (mru-recall! buffer-stack buffer))
+        (set-buffer! buffer)
         (set! aux-buffer #f))
       (begin
-        (emacsy-log-debug "Set buffer to ~a" buffer)
-        (set-buffer! buffer)))
+        (emacsy-log-debug "Add buffer ~a" buffer)
+        (add-buffer! buffer)))
   (emacsy-log-debug "Running enter hook for ~a" (current-buffer))
   (run-hook (buffer-enter-hook (current-buffer)))
   (current-buffer))
