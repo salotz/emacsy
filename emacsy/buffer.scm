@@ -132,14 +132,18 @@
 ;;; one.
 
 ;;.
+;;; global variable; here we go.
 (define buffer-stack (make <mru-stack>))
 
 ;;.
+;;; Mixing #f with buffer type. Nice!
 (define last-buffer #f)
 
 ;;.
+;;; Don't rely on Mru. Break the abstraction barrier, I'm game!
 (define aux-buffer #f)
 
+;;; Can already see the fruits of the labor!
 ;; Buffer's have a name, and there is always a current buffer or it's
 ;; false.  Note that methods do not work as easily with optional
 ;; arguments.  It seems best to define each method with a different
