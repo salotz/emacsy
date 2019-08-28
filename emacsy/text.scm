@@ -24,7 +24,6 @@
   #:use-module (ice-9 regex)
   #:use-module (oop goops)
   #:use-module (emacsy util)
-  #:use-module (emacsy mru-stack)
   #:use-module (emacsy self-doc)
   #:use-module (emacsy event)
   #:use-module (emacsy keymap)
