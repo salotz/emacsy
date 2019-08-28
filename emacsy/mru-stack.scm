@@ -72,7 +72,7 @@
 
 ;;.
 (define-method* (mru-ref (s <mru-stack>) #:optional (ref 1))
-  (unless (mru-empty? s)
+  (if (mru-empty? s) #f
        (list-ref (mru->list s) ref)))
 
 ;;.
