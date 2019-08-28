@@ -98,7 +98,7 @@
 
 ;;; FIXME: performance can be gained by defining (encylce! lst) -> circular-list
 (define-method* (mru-next (s <mru-stack>) #:optional (count INCR))
-  (if (mru-empty? s) ROF
+  (if (mru-empty? s) s
       (make <mru-stack>
         #:q (let ((proc (if (negative? count) reverse identity))
                   (count (if (negative? count) (- count) count)))
