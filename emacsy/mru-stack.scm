@@ -71,7 +71,7 @@
 (define mru-set mru-recall)
 
 ;;.
-(define-method* (mru-ref (s <mru-stack>) #:optional (ref 1))
+(define-method* (mru-ref (s <mru-stack>) #:optional (ref 0))
   (if (mru-empty? s) #f
        (list-ref (mru->list s) ref)))
 
