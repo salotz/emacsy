@@ -67,7 +67,7 @@
   (make <mru-stack> #:q (xcons (q s) x)))
 
 (define-method (mru-remove (s <mru-stack>) item)
-  (make <mru-stack> #:q (delq item (q s))))
+  (make <mru-stack> #:q (delq1! item (list-copy (q s)))))
 
 ;;; note: easily the most important proc
 (define-method (mru-recall (s <mru-stack>) item)
