@@ -190,7 +190,7 @@
 
 ;;.
 (define-method (write (obj <buffer>) port)
-  (write (string-concatenate (list "#<buffer '" (buffer-name obj) "'>")) port))
+  (format port "#<buffer ~a>" (buffer-name obj)))
 
 ;; @c @node
 ;; @subsection Emacs Compatibility
