@@ -35,7 +35,7 @@
 ;;; <buffer:test>=
 (define b (make <buffer> #:name "*test-buffer*"))
 (check (buffer-name b) => "*test-buffer*")
-(check (object->string b) => "\"#<buffer '*test-buffer*'>\"")
+(check (object->string b) => "#<buffer *test-buffer*>")
 (check (current-buffer) => #f)
 ;;; <buffer:test>=
 (add-buffer! b)

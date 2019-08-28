@@ -157,24 +157,17 @@
 ;; false.  Note that methods do not work as easily with optional
 ;; arguments.  It seems best to define each method with a different
 ;; number of arguments as shown below.
-(define-method (buffer-name)
-  (buffer-name (current-buffer)))
-
-;;.
-(define-method (buffer-name (buffer <buffer>))
+(define-method* (buffer-name #:optional (buffer (current-buffer)))
   (slot-ref buffer 'name))
 
-(define-method (set-buffer-name! name)
-  (set-buffer-name! name (current-buffer)))
-
-(define-method (set-buffer-name! name (buffer <buffer>))
+(define-method* (set-buffer-name! name #:optional (buffer (current-buffer)))
   (slot-set! buffer 'name name))
 
-(define-method (buffer-modified?)
-  (buffer-modified? (current-buffer)))
+(define-method* (buffer-modified? #:optional (buffer (current-buffer)))
+  (buffer-modified? buffer))
 
-(define-method (buffer-modified-tick)
-  (buffer-modified-tick (current-buffer)))
+(define-method* (buffer-modified-tick #:optional (buffer (current-buffer)))
+  (buffer-modified-tick buffer))
 
 (define-method (write (obj <buffer>) port)
   (format port "#<buffer ~a>" (buffer-name obj)))
@@ -182,11 +175,11 @@
 ;; @c @node
 ;; @subsection Emacs Compatibility
 
-(define (current-local-map)
-  (local-keymap (current-buffer)))
+(define* (current-local-map #:optional (buffer (current-buffer)))
+  (local-keymap buffer))
 
-(define (use-local-map keymap)
-  (set! (local-keymap (current-buffer)) keymap))
+(define* (use-local-map keymap #:optional (buffer (current-buffer)))
+  (set! (local-keymap buffer) keymap))
 
 (define (buffer-list)
   (mru->list buffer-stack))
@@ -258,8 +251,8 @@
 
 (define switch-to-buffer primitive-switch-to-buffer)
 
-(define (local-var-ref symbol)
-  (let ((result (assq symbol (local-variables (current-buffer)))))
+(define* (local-var-ref symbol #:optional (buffer (current-buffer)))
+  (let ((result (assq symbol (local-variables buffer))))
     (if (pair? result)
      (cdr result)
      ;(variable-ref (make-undefined-variable))
@@ -268,19 +261,16 @@
 ;; If buffers were in their own modules I could dynamically add variables
 ;; to their namespace.  Interesting idea.
 
-(define (local-var-set! symbol value)
-  (slot-set! (current-buffer)
+(define* (local-var-set! symbol value #:optional (buffer (current-buffer)))
+  (slot-set! buffer
              'locals
-             (assq-set! (local-variables (current-buffer)) symbol value)))
+             (assq-set! (local-variables buffer) symbol value)))
 
 (define local-var
                (make-procedure-with-setter local-var-ref local-var-set!))
 
 ;; method
-(define-method (emacsy-mode-line)
-  (emacsy-mode-line (current-buffer)))
-
-(define-method (emacsy-mode-line (buffer <buffer>))
+(define-method* (emacsy-mode-line #:optional (buffer (current-buffer)))
   (format #f "-:~a- ~a    (~{~a~^ ~})"
           (if (buffer-modified? buffer) "**"
               "--")
