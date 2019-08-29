@@ -84,26 +84,44 @@
   #:use-module (oop goops)
   #:use-module (emacsy util)
   #:use-module (emacsy event)
+  #:use-module ((ice-9 hash-table) #:select (alist->hash-table))
   #:export (<keymap>
+            ;; accessors
+            parent
+            entries
+            keymap-to-list
+            keymap-from-list
             lookup-key
             lookup-key?
             define-key
             keymap?
             make-keymap
+            keymap->list
+            list->keymap
             lookup-key-entry?))
 
 ;;.
 (define-class <keymap> ()
-  (entries #:getter entries #:init-thunk (lambda () (make-hash-table)))
-  (parent #:accessor parent #:init-keyword #:parent #:init-value #f))
+  (entries #:accessor entries #:init-keyword #:entries #:init-thunk (lambda () (make-hash-table)))
+  (parent #:accessor parent #:init-keyword #:parent #:init-thunk #f)
+  (to-list #:accessor keymap-to-list #:init-keyword #:to-list #:init-form keymap->list)
+  (from-list #:accessor keymap-from-list #:init-keyword #:from-list #:init-form list->keymap))
 
-(use-modules (rnrs hashtables) #:select (hash-map->list))
-(define-method-public (->list (keymap <keymap>))
-  (list (cons 'entries (if (not (keymap? keymap)) '()
-                           (hash-map->list cons (entries keymap))))
+(define (keymap->list keymap)
+  (list (list 'entries (hash-map->list cons (entries keymap)))
         (list 'parent (let ((keymap (parent keymap)))
-                        (if (not (keymap? keymap)) '()
-                            (->list keymap))))))
+                        (if keymap (keymap->list keymap) #f)))
+        (list 'keymap-from-list list->keymap)
+        (list 'keymap-to-list keymap->list)))
+
+(define (list->keymap lst)
+  (make <keymap>
+    #:entries (alist->hash-table (car (assoc-ref lst 'entries)))
+    #:parent (let ((keymap (car (assoc-ref lst 'parent))))
+               (if (not keymap) #f
+                   (list->keymap (car (assoc-ref lst 'parent)))))
+    #:to-list keymap->list
+    #:from-list list->keymap))
 ;;.
 (define* (lookup-key keymap keys #:optional (follow-parent? #t))
   (define* (lookup-key* keymap keys #:optional (follow-parent? #t))
