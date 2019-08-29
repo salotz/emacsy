@@ -195,20 +195,9 @@
 
 (define switch-to-buffer primitive-switch-to-buffer)
 
-(define* (local-var-ref symbol #:optional (buffer (current-buffer)))
-  (let ((result (assq symbol (buffer-variables buffer))))
-    (if (pair? result)
-     (cdr result)
-     ;(variable-ref (make-undefined-variable))
-     (throw 'no-such-buffer-variable symbol))))
-
 ;; If buffers were in their own modules I could dynamically add variables
 ;; to their namespace.  Interesting idea.
 
-(define* (local-var-set! symbol value #:optional (buffer (current-buffer)))
-  (slot-set! buffer
-             'variables
-             (assq-set! (buffer-variables buffer) symbol value)))
 ;;; interactive fns :: A [+ ARGS] -> unspecified
 (define-interactive (next-buffer buffer-stack #:optional (incr 1))
   (switch-to-buffer (mru-ref (buffer-next buffer-stack incr))))
@@ -216,8 +205,6 @@
 (define-interactive (prev-buffer buffer-stack #:optional (incr 1))
   (next-buffer buffer-stack (- incr)))
 
-(define local-var
-               (make-procedure-with-setter local-var-ref local-var-set!))
 ;; This is scary, we will override it when we have <text-buffer>.
 (define-interactive (kill-buffer buffer-stack #:optional buffer)
   (remove-buffer buffer-stack buffer))
