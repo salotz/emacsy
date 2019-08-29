@@ -167,12 +167,11 @@
 
 (define (buffer-set buffer-stack buffer)
   ;; (emacsy-log-debug "set-buffer! to ~a" buffer)
-  (if (mru-contains? buffer-stack buffer)
-      (mru-recall buffer-stack buffer)))
+  (mru-set buffer-stack buffer))
 
-(define* (other-buffer buffer-stack #:optional (incr 1))
+(define* (buffer-other buffer-stack #:optional (incr 1))
   (current-buffer (mru-recall buffer-stack
-                              (list-ref (buffer-list) incr))))
+                              (list-ref (buffer-list buffer-stack) incr))))
 
 ;;; end
 ;;;;;; end
@@ -200,7 +199,7 @@
 
 ;;; interactive fns :: A [+ ARGS] -> unspecified
 (define-interactive (next-buffer buffer-stack #:optional (incr 1))
-  (switch-to-buffer (mru-ref (buffer-next buffer-stack incr))))
+  (switch-to-buffer buffer-stack (mru-ref (buffer-next buffer-stack incr))))
 
 (define-interactive (prev-buffer buffer-stack #:optional (incr 1))
   (next-buffer buffer-stack (- incr)))
@@ -210,7 +209,7 @@
   (remove-buffer buffer-stack buffer))
 
 (define-interactive (other-buffer buffer-stack #:optional (count 1))
-  (switch-to-buffer (other-buffer! buffer-stack count))
+  (switch-to-buffer buffer-stack (buffer-other buffer-stack count))
   #t)
 
 ;; method
