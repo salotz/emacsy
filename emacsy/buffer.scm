@@ -32,8 +32,6 @@
   #:use-module (emacsy mode)
   #:export (<buffer>
             ;; accessors
-            after-change-hook
-            before-change-hook
             buffer-enter-hook
             buffer-exit-hook
             buffer-file-name
@@ -43,8 +41,6 @@
             local-keymap
             local-variables
             ;; variables
-            after-buffer-change-hook
-            before-buffer-change-hook
             ;; procs
             next-buffer
             prev-buffer
@@ -132,18 +128,6 @@
   (buffer-kill-hook #:accessor buffer-kill-hook #:init-form (make-hook 0))
   (buffer-modes #:accessor buffer-modes #:init-form '() #:init-keyword #:buffer-modes))
 
-(define-variable before-buffer-change-hook (make-hook 1)
-  "This hook is called prior to the buffer being changed with one argument, the buffer.")
-
-(define-variable after-buffer-change-hook (make-hook 1)
-  "This hook is called after to the buffer has changed with one argument, the buffer.")
-
-;;; The buffer module also keeps track of the live buffers and the current
-;;; one.
-
-;;; global variable; here we go.
-(define buffer-stack (make <mru-stack>))
-
 ;;; Can already see the fruits of the labor!
 ;; Buffer's have a name, and there is always a current buffer or it's
 ;; false.  Note that methods do not work as easily with optional
@@ -163,7 +147,6 @@
 
 (define-method (write (obj <buffer>) port)
   (format port "#<buffer ~a>" (buffer-name obj)))
-(export void-buffer)
 ;; @c @node
 ;; @subsection Emacs Compatibility
 
@@ -175,8 +158,6 @@
 
 (define (buffer-list)
   (mru->list buffer-stack))
-
-(define void-buffer (make <buffer>))
 
 (define (current-buffer)
   ;; Perhaps instead of returning #f for no buffer there should be an
