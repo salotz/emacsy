@@ -148,7 +148,7 @@
 ;;; buffer-stack ops :: buffer-stack [+ ARGS] -> buffer-stack
 (define (current-buffer buffer-stack)
   (or (mru-ref buffer-stack)
-      void-buffer))
+      %void-buffer))
 
 (define* (buffer-ref buffer-stack #:optional (ref 0))
   (mru-ref buffer-stack ref))
