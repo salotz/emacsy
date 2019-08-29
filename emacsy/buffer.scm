@@ -35,11 +35,13 @@
             buffer-enter-hook
             buffer-exit-hook
             buffer-file-name
+            buffer-keymap
             buffer-kill-hook
             buffer-modes
             buffer-modified-tick
-            local-keymap
-            local-variables
+            buffer-modified?
+            buffer-name
+            buffer-variables
             ;; variables
             ;; procs
             next-buffer
@@ -117,16 +119,6 @@
 
 ;;; buffers are used by text.scm, introspection.scm, minibuffer.scm, emacsy.scm, core.scm
 (define-class <buffer> ()
-  (name #:init-keyword #:name #:init-value "")
-  (file-name #:accessor buffer-file-name #:init-form #f #:init-keyword #:buffer-file-name)
-  (keymap #:accessor local-keymap #:init-keyword #:keymap #:init-form (make-keymap))
-  (locals #:accessor local-variables #:init-form '())
-  (buffer-modified? #:accessor buffer-modified? #:init-value #f)
-  (buffer-modified-tick #:accessor buffer-modified-tick #:init-value 0)
-  (buffer-enter-hook #:accessor buffer-enter-hook #:init-form (make-hook 0))
-  (buffer-exit-hook #:accessor buffer-exit-hook #:init-form (make-hook 0))
-  (buffer-kill-hook #:accessor buffer-kill-hook #:init-form (make-hook 0))
-  (buffer-modes #:accessor buffer-modes #:init-form '() #:init-keyword #:buffer-modes))
 
 ;;; Can already see the fruits of the labor!
 ;; Buffer's have a name, and there is always a current buffer or it's
@@ -144,6 +136,16 @@
 
 (define-method* (buffer-modified-tick #:optional (buffer (current-buffer)))
   (buffer-modified-tick buffer))
+  (name #:accessor buffer-name #:init-keyword #:name #:init-value "")
+  (file-name #:accessor buffer-file-name #:init-keyword #:file-name #:init-form #f)
+  (keymap #:accessor buffer-keymap #:init-keyword #:keymap #:init-form (make-keymap))
+  (variables #:accessor buffer-variables #:init-keyword #:variables #:init-form '())
+  (modified? #:accessor buffer-modified? #:init-keyword #:modified #:init-value #f)
+  (modified-tick #:accessor buffer-modified-tick #:init-keyword #:modified-tick #:init-value 0)
+  (enter-hook #:accessor buffer-enter-hook #:init-keyword #:enter-hook #:init-form (make-hook 0))
+  (exit-hook #:accessor buffer-exit-hook #:init-keyword #:exit-hook #:init-form (make-hook 0))
+  (kill-hook #:accessor buffer-kill-hook #:init-keyword #:kill-hook #:init-form (make-hook 0))
+  (modes #:accessor buffer-modes #:init-keyword #:modes #:init-form '()))
 
 (define-method (write (obj <buffer>) port)
   (format port "#<buffer ~a>" (buffer-name obj)))
