@@ -149,6 +149,8 @@
 ;;; add a proc to go from buffer -> list. List are extensible, <buffer>
 ;;; or any object is in-extensible or extensible at a bigger cost.
 (define (buffer->list buffer)
+  "FIXME: redo this (buffer->list and list->buffer) with pattern
+matching."
   (list (list 'buffer-name (buffer-name buffer))
         (list 'buffer-file-name (buffer-file-name buffer))
         (list 'buffer-keymap ((keymap-to-list (buffer-keymap buffer))
