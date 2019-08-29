@@ -73,7 +73,10 @@
 (define-method (mru-recall (s <mru-stack>) item)
   (mru-add (mru-remove s item) item))
 
-(define mru-set mru-recall)
+(define-method (mru-set (s <mru-stack>) item)
+  (if (mru-contains? buffer-stack buffer)
+      (mru-recall s item)
+      s))
 
 (define-method* (mru-ref (s <mru-stack>) #:optional (ref LIST-BEGIN))
   (if (mru-empty? s) ROF
