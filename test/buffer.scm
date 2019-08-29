@@ -32,6 +32,51 @@
 (use-modules (check))
 (use-modules (ice-9 pretty-print))
 (define test-errors '())
+(use-modules (emacsy buffer) (emacsy mru-stack) (oop goops))
+(define buf (make <buffer>))
+
+;;; accessor; get
+(buffer-name buf) => ""
+(buffer-file-name buf) => #f
+(buffer-keymap buf) => #<keymap >
+(buffer-variables buf) => ()
+(buffer-modified? buf) => #f
+(buffer-modified-tick buf) => 0
+(buffer-enter-hook buf) => #<hook 0 1e41a20>
+(buffer-exit-hook buf) => #<hook 0 1e41a10>
+(buffer-kill-hook buf) => #<hook 0 1e41a00>
+(buffer-modes buf) => ()
+
+;;; accessor; set
+(set! (buffer-name buf) "acdc") => "acdc"
+(buffer-name buf) => "acdc"
+(set! (buffer-file-name buf) "/tmp/test") => "/tmp/test"
+(buffer-file-name buf) => "/tmp/test"
+(set! (buffer-keymap buf) "animals") => "animals"
+(buffer-keymap buf) => "animals"
+(set! (buffer-variables buf) "animals") => "animals"
+(buffer-variables buf) => "animals"
+(set! (buffer-modified? buf) "animals") => "animals"
+ (buffer-modified? buf) => "animals"
+(set! (buffer-modified-tick buf) "animals") => "animals"
+ (buffer-modified-tick buf) => "animals"
+(set! (buffer-enter-hook buf) "animals") => "animals"
+(buffer-enter-hook buf) => "animals"
+(set! (buffer-exit-hook buf) "animals") => "animals"
+(buffer-exit-hook buf) => "animals"
+(set! (buffer-kill-hook buf) "animals") => "animals"
+(buffer-kill-hook buf) => "animals"
+(set! (buffer-modes buf) "animals") => "animals"
+(buffer-modes buf) => "animals"
+
+buf => #<buffer acdc>
+
+(eq? (@@ (emacsy buffer) void-buffer) (current-buffer (make <mru-stack>))) => #t
+
+(call-with-output-string (lambda (port) (write buf port))) => "#<buffer acdc>"
+
+(buffer-list (make <mru-stack>)) => ()
+
 ;;; <buffer:test>=
 (define b (make <buffer> #:name "*test-buffer*"))
 (check (buffer-name b) => "*test-buffer*")
