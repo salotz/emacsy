@@ -97,6 +97,13 @@
   (entries #:getter entries #:init-thunk (lambda () (make-hash-table)))
   (parent #:accessor parent #:init-keyword #:parent #:init-value #f))
 
+(use-modules (rnrs hashtables) #:select (hash-map->list))
+(define-method-public (->list (keymap <keymap>))
+  (list (cons 'entries (if (not (keymap? keymap)) '()
+                           (hash-map->list cons (entries keymap))))
+        (list 'parent (let ((keymap (parent keymap)))
+                        (if (not (keymap? keymap)) '()
+                            (->list keymap))))))
 ;;.
 (define* (lookup-key keymap keys #:optional (follow-parent? #t))
   (define* (lookup-key* keymap keys #:optional (follow-parent? #t))
