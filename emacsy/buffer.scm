@@ -42,6 +42,8 @@
             buffer-modified?
             buffer-name
             buffer-variables
+            buffer-to-list
+            buffer-from-list
             ;; variables
             ;; procs
             next-buffer
@@ -66,6 +68,8 @@
             set-buffer!
             switch-to-buffer
             local-var
+            buffer->list
+            list->buffer
             emacsy-mode-line))
 
 ;;; Commentary:
@@ -128,8 +132,53 @@
   (enter-hook #:accessor buffer-enter-hook #:init-keyword #:enter-hook #:init-form (make-hook 0))
   (exit-hook #:accessor buffer-exit-hook #:init-keyword #:exit-hook #:init-form (make-hook 0))
   (kill-hook #:accessor buffer-kill-hook #:init-keyword #:kill-hook #:init-form (make-hook 0))
-  (modes #:accessor buffer-modes #:init-keyword #:modes #:init-form '()))
+  (modes #:accessor buffer-modes #:init-keyword #:modes #:init-form '())
+  ;; keep a copy of dna; not really
+  (to-list #:accessor buffer-to-list #:init-keyword #:to-list #:init-form buffer->list)
+  (from-list #:accessor buffer-from-list #:init-keyword #:from-list #:init-form list->buffer))
 
+;;; code is data.
+
+;;; Code is no longer data with #<buffer > #<record > and
+;;; such.  many items in a buffer are not represenable as a literal,
+;;; check if the object is a non-literal, then 1. somehow ask each
+;;; object to supply a method to convert it to a list, this proc should
+;;; be contained in the object itself maybe? OR 2. just use lists in the
+;;; first place.
+
+;;; add a proc to go from buffer -> list. List are extensible, <buffer>
+;;; or any object is in-extensible or extensible at a bigger cost.
+(define (buffer->list buffer)
+  (list (list 'buffer-name (buffer-name buffer))
+        (list 'buffer-file-name (buffer-file-name buffer))
+        (list 'buffer-keymap ((keymap-to-list (buffer-keymap buffer))
+                              (buffer-keymap buffer)))
+        (list 'buffer-variables (buffer-variables buffer))
+        (list 'buffer-modified? (buffer-modified? buffer))
+        (list 'buffer-modified-tick (buffer-modified-tick buffer))
+        (list 'buffer-enter-hook (buffer-enter-hook buffer))
+        (list 'buffer-exit-hook (buffer-exit-hook buffer))
+        (list 'buffer-kill-hook (buffer-kill-hook buffer))
+        (list 'buffer-modes (buffer-modes buffer))
+        ;; keep a copy of dna
+        (list 'buffer-from-list list->buffer)
+        (list 'buffer-to-list buffer->list)))
+
+(define (list->buffer lst)
+  (make <buffer>
+    #:name (car (assoc-ref lst 'buffer-name))
+    #:file-name (car (assoc-ref lst 'buffer-file-name))
+    #:keymap (car (assoc-ref lst 'buffer-keymap))
+    #:variables (car (assoc-ref lst 'buffer-variables))
+    #:modified? (car (assoc-ref lst 'buffer-modified?))
+    #:modified-tick (car (assoc-ref lst 'buffer-modified-tick))
+    #:enter-hook (car (assoc-ref lst 'buffer-enter-hook))
+    #:exit-hook (car (assoc-ref lst 'buffer-exit-hook))
+    #:kill-hook (car (assoc-ref lst 'buffer-kill-hook))
+    #:modes (car (assoc-ref lst 'buffer-modes))
+    ;; a copy of dna
+    #:to-list buffer->list
+    #:from-list list->buffer))
 
 (define %void-buffer (make <buffer>))
 
