@@ -83,6 +83,9 @@
 (define-method (mru->list (s <mru-stack>))
   (q s))
 
+(define-method (->list (s <mru-stack>))
+  (q s))
+
 (define-method (mru-empty? (s <mru-stack>))
   (null-list? (q s)))
 
