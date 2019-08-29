@@ -119,23 +119,6 @@
 
 ;;; buffers are used by text.scm, introspection.scm, minibuffer.scm, emacsy.scm, core.scm
 (define-class <buffer> ()
-
-;;; Can already see the fruits of the labor!
-;; Buffer's have a name, and there is always a current buffer or it's
-;; false.  Note that methods do not work as easily with optional
-;; arguments.  It seems best to define each method with a different
-;; number of arguments as shown below.
-(define-method* (buffer-name #:optional (buffer (current-buffer)))
-  (slot-ref buffer 'name))
-
-(define-method* (set-buffer-name! name #:optional (buffer (current-buffer)))
-  (slot-set! buffer 'name name))
-
-(define-method* (buffer-modified? #:optional (buffer (current-buffer)))
-  (buffer-modified? buffer))
-
-(define-method* (buffer-modified-tick #:optional (buffer (current-buffer)))
-  (buffer-modified-tick buffer))
   (name #:accessor buffer-name #:init-keyword #:name #:init-value "")
   (file-name #:accessor buffer-file-name #:init-keyword #:file-name #:init-form #f)
   (keymap #:accessor buffer-keymap #:init-keyword #:keymap #:init-form (make-keymap))
@@ -147,70 +130,58 @@
   (kill-hook #:accessor buffer-kill-hook #:init-keyword #:kill-hook #:init-form (make-hook 0))
   (modes #:accessor buffer-modes #:init-keyword #:modes #:init-form '()))
 
+
+(define %void-buffer (make <buffer>))
+
 (define-method (write (obj <buffer>) port)
   (format port "#<buffer ~a>" (buffer-name obj)))
 ;; @c @node
 ;; @subsection Emacs Compatibility
 
-(define* (current-local-map #:optional (buffer (current-buffer)))
-  (local-keymap buffer))
-
-(define* (use-local-map keymap #:optional (buffer (current-buffer)))
-  (set! (local-keymap buffer) keymap))
-
-(define (buffer-list)
+;;;;;; These are all just mru-stack, here called buffer-stack ops, the
+;;;;;; fuck, why am i redoing this, it's pretty much the same damn
+;;;;;; thing.
+;;; :: buffer-stack -> list
+(define (buffer-list buffer-stack)
   (mru->list buffer-stack))
 
-(define (current-buffer)
-  ;; Perhaps instead of returning #f for no buffer there should be an
-  ;; immutable void-buffer class.
+;;; buffer-stack ops :: buffer-stack [+ ARGS] -> buffer-stack
+(define (current-buffer buffer-stack)
   (or (mru-ref buffer-stack)
       void-buffer))
 
-(define (add-buffer! buffer)
-  (set! buffer-stack (mru-add buffer-stack buffer)))
+(define* (buffer-ref buffer-stack #:optional (ref 0))
+  (mru-ref buffer-stack ref))
 
-(define (remove-buffer! buffer)
-  (set! buffer-stack (mru-remove buffer-stack buffer)))
+(define (add-buffer buffer-stack buffer)
+  (mru-add buffer-stack buffer))
 
-(define* (buffer-previous! #:optional (incr 1))
-  (set! buffer-stack (mru-next buffer-stack incr)))
+(define (remove-buffer buffer-stack buffer)
+  (mru-remove buffer-stack buffer))
 
-(define* (buffer-next! #:optional (incr 1))
-  (buffer-previous! (- incr)))
+(define* (buffer-previous buffer-stack #:optional (incr 1))
+  (mru-next buffer-stack incr))
 
-(define-interactive (next-buffer #:optional (incr 1))
-  (buffer-next! incr)
-  (switch-to-buffer (mru-ref buffer-stack)))
+(define* (buffer-next buffer-stack #:optional (incr 1))
+  (buffer-previous buffer-stack (- incr)))
 
-(define-interactive (prev-buffer #:optional (incr 1))
-  (next-buffer (- incr)))
-
-(define (set-buffer! buffer)
-  ;;(emacsy-log-debug "set-buffer! to ~a" buffer)
+(define (buffer-set buffer-stack buffer)
+  ;; (emacsy-log-debug "set-buffer! to ~a" buffer)
   (if (mru-contains? buffer-stack buffer)
-      (set! buffer-stack (mru-recall buffer-stack buffer))))
+      (mru-recall buffer-stack buffer)))
 
-;; This is scary, we will override it when we have <text-buffer>.
-(define-interactive (kill-buffer #:optional (buffer (current-buffer)))
-  (remove-buffer! buffer))
+(define* (other-buffer buffer-stack #:optional (incr 1))
+  (current-buffer (mru-recall buffer-stack
+                              (list-ref (buffer-list) incr))))
 
-(define* (other-buffer! #:optional (incr 1))
-  (set! buffer-stack
-        (mru-recall buffer-stack
-                    (list-ref (buffer-list) incr)))
-  (current-buffer))
-
-(define-interactive (other-buffer #:optional (count 1))
-  (switch-to-buffer (other-buffer! count))
-  #t)
-
+;;; end
+;;;;;; end
 
 ;;; This is our primitive procedure for switching buffers.  It does not
 ;;; handle any user interaction.
-(define* (primitive-switch-to-buffer buffer #:optional (recall? #t))
-  (emacsy-log-debug "Running exit hook for ~a" (current-buffer))
-  (run-hook (buffer-exit-hook (current-buffer)))
+(define* (primitive-switch-to-buffer buffer-stack buffer #:optional (recall? #t))
+  (emacsy-log-debug "Running exit hook for ~a" (current-buffer buffer-stack))
+  (run-hook (buffer-exit-hook (current-buffer buffer-stack)))
   (if recall?
       (begin
         (emacsy-log-debug "Recall buffer ~a" buffer)
@@ -218,34 +189,48 @@
       (begin
         (emacsy-log-debug "Add buffer ~a" buffer)
         (add-buffer! buffer)))
-  (emacsy-log-debug "Running enter hook for ~a" (current-buffer))
-  (run-hook (buffer-enter-hook (current-buffer)))
-  (current-buffer))
+  (emacsy-log-debug "Running enter hook for ~a" (current-buffer buffer-stack))
+  (run-hook (buffer-enter-hook (current-buffer buffer-stack)))
+  (current-buffer buffer-stack))
 
 (define switch-to-buffer primitive-switch-to-buffer)
 
 (define* (local-var-ref symbol #:optional (buffer (current-buffer)))
-  (let ((result (assq symbol (local-variables buffer))))
+  (let ((result (assq symbol (buffer-variables buffer))))
     (if (pair? result)
      (cdr result)
      ;(variable-ref (make-undefined-variable))
-     (throw 'no-such-local-variable symbol))))
+     (throw 'no-such-buffer-variable symbol))))
 
 ;; If buffers were in their own modules I could dynamically add variables
 ;; to their namespace.  Interesting idea.
 
 (define* (local-var-set! symbol value #:optional (buffer (current-buffer)))
   (slot-set! buffer
-             'locals
-             (assq-set! (local-variables buffer) symbol value)))
+             'variables
+             (assq-set! (buffer-variables buffer) symbol value)))
+;;; interactive fns :: A [+ ARGS] -> unspecified
+(define-interactive (next-buffer buffer-stack #:optional (incr 1))
+  (switch-to-buffer (mru-ref (buffer-next buffer-stack incr))))
+
+(define-interactive (prev-buffer buffer-stack #:optional (incr 1))
+  (next-buffer buffer-stack (- incr)))
 
 (define local-var
                (make-procedure-with-setter local-var-ref local-var-set!))
+;; This is scary, we will override it when we have <text-buffer>.
+(define-interactive (kill-buffer buffer-stack #:optional buffer)
+  (remove-buffer buffer-stack buffer))
+
+(define-interactive (other-buffer buffer-stack #:optional (count 1))
+  (switch-to-buffer (other-buffer! buffer-stack count))
+  #t)
 
 ;; method
-(define-method* (emacsy-mode-line #:optional (buffer (current-buffer)))
+(define-method* (emacsy-mode-line buffer)
   (format #f "-:~a- ~a    (~{~a~^ ~})"
           (if (buffer-modified? buffer) "**"
               "--")
           (buffer-name buffer)
           (map mode-name (buffer-modes buffer))))
+;;; end
