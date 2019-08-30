@@ -22,6 +22,7 @@
 (define-module (emacsy buffer)
   #:use-module (ice-9 format)
   #:use-module (ice-9 optargs)
+  #:use-module ((ice-9 session) #:select (procedure-arguments))
   #:use-module (oop goops)
   #:use-module (emacsy util)
   #:use-module (emacsy mru-stack)
@@ -70,6 +71,7 @@
             local-var
             buffer->list
             list->buffer
+            list->hook
             emacsy-mode-line))
 
 ;;; Commentary:
@@ -158,25 +160,49 @@ matching."
         (list 'buffer-variables (buffer-variables buffer))
         (list 'buffer-modified? (buffer-modified? buffer))
         (list 'buffer-modified-tick (buffer-modified-tick buffer))
-        (list 'buffer-enter-hook (buffer-enter-hook buffer))
-        (list 'buffer-exit-hook (buffer-exit-hook buffer))
-        (list 'buffer-kill-hook (buffer-kill-hook buffer))
+        (list 'buffer-enter-hook (hook->list (buffer-enter-hook buffer)))
+        (list 'buffer-exit-hook (hook->list (buffer-exit-hook buffer)))
+        (list 'buffer-kill-hook (hook->list (buffer-kill-hook buffer)))
         (list 'buffer-modes (buffer-modes buffer))
         ;; keep a copy of dna
         (list 'buffer-from-list list->buffer)
         (list 'buffer-to-list buffer->list)))
 
+;;; hooks are from guile. unless list->hook is added to guile this
+;;; should probably go to utilities.
+(define (list->hook lst)
+  "Convert the procedure list of LST to a hook."
+  (define (adder h lst arity)
+    (if (null? lst) h
+        (let ((proc (car lst)))
+          (if (procedure? proc)
+              (if (equal? arity (car (procedure-minimum-arity proc)))
+                  (begin (add-hook! h proc #t)
+                         (adder h (cdr lst) arity))
+                  (error (format #f "In procedure list->hook: Wrong number of arguments to ~s, expected arity ~s" proc arity)))
+              (error (format #f "In procedure list->hook: Wrong type argument ~s, expecting a procedure." proc))))))
+  (if (null? lst) (make-hook)
+      (let ((proc (car lst)))
+        (if (procedure? proc)
+            (let* ((arity (car (procedure-minimum-arity proc)))
+                   (hook (make-hook arity)))
+              (adder hook lst arity))
+            (error (format #f "In procedure list->hook: Wrong type argument: ~s in list, expected a procedure." proc))))))
+
 (define (list->buffer lst)
   (make <buffer>
     #:name (car (assoc-ref lst 'buffer-name))
     #:file-name (car (assoc-ref lst 'buffer-file-name))
-    #:keymap (car (assoc-ref lst 'buffer-keymap))
+    #:keymap (let* ((keymap-lst (car (assoc-ref lst 'buffer-keymap)))
+                    ;; dna in action
+                    (keymap-from-list (car (assoc-ref keymap-lst 'keymap-from-list))))
+               (keymap-from-list keymap-lst))
     #:variables (car (assoc-ref lst 'buffer-variables))
     #:modified? (car (assoc-ref lst 'buffer-modified?))
     #:modified-tick (car (assoc-ref lst 'buffer-modified-tick))
-    #:enter-hook (car (assoc-ref lst 'buffer-enter-hook))
-    #:exit-hook (car (assoc-ref lst 'buffer-exit-hook))
-    #:kill-hook (car (assoc-ref lst 'buffer-kill-hook))
+    #:enter-hook (list->hook (car (assoc-ref lst 'buffer-enter-hook)))
+    #:exit-hook (list->hook (car (assoc-ref lst 'buffer-exit-hook)))
+    #:kill-hook (list->hook (car (assoc-ref lst 'buffer-kill-hook)))
     #:modes (car (assoc-ref lst 'buffer-modes))
     ;; a copy of dna
     #:to-list buffer->list
