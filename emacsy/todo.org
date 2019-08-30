@@ -5,6 +5,8 @@ my little experiments:
 - imperative style is hard to comprehend, make everything functional
   (and "nicer") as much as possible.
 - Reduce overall code.
+- woohoo! mixing of types is solved by throwing errors instead! Instead
+  of a quiet crash, now you can atleast debug it.
 
 * User's voice
 A sensible advice: (don't change anything, just fix the bugs.)
