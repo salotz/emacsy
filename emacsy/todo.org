@@ -1,0 +1,20 @@
+* Emacsy dev guide
+my little experiments:
+- dna: items (avoiding using the word "object" for clarity) contain
+  information (really, procedures) to manipulate themselves.
+- imperative style is hard to comprehend, make everything functional
+  (and "nicer") as much as possible.
+- Reduce overall code.
+
+* User's voice
+A sensible advice: (don't change anything, just fix the bugs.)
+- goops are useful
+- better error reporting, avoid errors originating from a lower
+  function, example:
+> (define mul *)
+> (mul 2 "h") -> ERROR: In procedure *: In procedure *: Wrong type: "h"
+> (define (mul . rest)
+    (if (number? (car rest))
+        (* (car rest) (mul (cdr rest)))
+        (error "In proc mul: please provide valid numbers")))
+> (mul 2 "h") -> ERROR: In procedure scm-error: In proc mul: please provide valid numbers

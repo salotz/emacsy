@@ -215,9 +215,12 @@ matching."
 ;; @c @node
 ;; @subsection Emacs Compatibility
 
-;;;;;; These are all just mru-stack, here called buffer-stack ops, the
-;;;;;; fuck, why am i redoing this, it's pretty much the same damn
-;;;;;; thing.
+;;; FIXME: buffer-list, buffer-ref, etc. are just a wrapper for
+;;; mru. This had been a problem before when errors related to mru would
+;;; be very hard to diagnose. Do 1. Better error reporting, errors
+;;; should originate from buffer api, not lower level procs. But before
+;;; that 0. Finish the functional api.
+
 ;;; :: buffer-stack -> list
 (define (buffer-list buffer-stack)
   (mru->list buffer-stack))
@@ -251,7 +254,6 @@ matching."
                               (list-ref (buffer-list buffer-stack) incr))))
 
 ;;; end
-;;;;;; end
 
 ;;; This is our primitive procedure for switching buffers.  It does not
 ;;; handle any user interaction.
