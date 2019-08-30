@@ -48,8 +48,7 @@
             mru-prev
             mru->list))
 
-;;; Return on Failure
-(define ROF #f)
+;;; Return on Failure is an error
 (define LIST-BEGIN 0)
 (define INCR 1)
 
@@ -71,7 +70,10 @@
 
 ;;; note: easily the most important proc
 (define-method (mru-recall (s <mru-stack>) item)
-  (mru-add (mru-remove s item) item))
+  (if (mru-contains? s item)
+      (mru-add (mru-remove s item) item)
+      (error (format #f "In procedure mru-recall: ~s does not exist in ~s"
+                          item s))))
 
 (define-method (mru-set (s <mru-stack>) item)
   (if (mru-contains? s item)
@@ -79,8 +81,10 @@
       s))
 
 (define-method* (mru-ref (s <mru-stack>) #:optional (ref LIST-BEGIN))
-  (if (mru-empty? s) ROF
-      (if (>= ref (length (mru->list s))) ROF
+  (if (mru-empty? s)
+      (error (format #f "In procedure mru-ref: Empty Mru-stack ~s" s))
+      (if (>= ref (length (mru->list s)))
+          (error (format #f "In procedure mru-ref: Ref ~s is larger than Mru-stack of length ~s" s (length (q s))))
           (list-ref (mru->list s) ref))))
 
 (define-method (mru->list (s <mru-stack>))
