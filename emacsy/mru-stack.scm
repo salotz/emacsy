@@ -74,7 +74,7 @@
   (mru-add (mru-remove s item) item))
 
 (define-method (mru-set (s <mru-stack>) item)
-  (if (mru-contains? buffer-stack buffer)
+  (if (mru-contains? s item)
       (mru-recall s item)
       s))
 
