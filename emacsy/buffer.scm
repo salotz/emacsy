@@ -49,6 +49,7 @@
             ;; procs
             next-buffer
             prev-buffer
+            buffer-ref
             buffer-previous!
             buffer-next!
             other-buffer!
@@ -64,9 +65,9 @@
             use-local-map
             buffer-list
             current-buffer
-            add-buffer!
-            remove-buffer!
-            set-buffer!
+            add-buffer
+            remove-buffer
+            set-buffer
             switch-to-buffer
             local-var
             buffer->list
@@ -208,8 +209,6 @@ matching."
     #:to-list buffer->list
     #:from-list list->buffer))
 
-(define %void-buffer (make <buffer>))
-
 (define-method (write (obj <buffer>) port)
   (format port "#<buffer ~a>" (buffer-name obj)))
 ;; @c @node
@@ -227,8 +226,7 @@ matching."
 
 ;;; buffer-stack ops :: buffer-stack [+ ARGS] -> buffer-stack
 (define (current-buffer buffer-stack)
-  (or (mru-ref buffer-stack)
-      %void-buffer))
+  (mru-ref buffer-stack))
 
 (define* (buffer-ref buffer-stack #:optional (ref 0))
   (mru-ref buffer-stack ref))
