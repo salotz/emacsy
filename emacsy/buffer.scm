@@ -45,31 +45,28 @@
             buffer-variables
             buffer-to-list
             buffer-from-list
+            ;; syntax
+            with-buffer
+            save-excursion
             ;; variables
             ;; procs
             next-buffer
             prev-buffer
+            kill-buffer
             buffer-ref
-            buffer-previous!
-            buffer-next!
-            other-buffer!
+            buffer-previous
+            buffer-next
+            buffer-other
+            buffer-set
+            other-buffer
             with-buffer
             save-excursion
-            buffer-stack
-            buffer-name
-            buffer-name
-            set-buffer-name!
-            buffer-modified?
-            buffer-modified-tick
-            current-local-map
-            use-local-map
             buffer-list
             current-buffer
             add-buffer
             remove-buffer
             set-buffer
             switch-to-buffer
-            local-var
             buffer->list
             list->buffer
             list->hook
@@ -220,54 +217,82 @@ matching."
 ;;; should originate from buffer api, not lower level procs. But before
 ;;; that 0. Finish the functional api.
 
-;;; :: buffer-stack -> list
+;;; :: mru-stack -> list
 (define (buffer-list buffer-stack)
-  (mru->list buffer-stack))
+  (mru-list buffer-stack))
 
 ;;; buffer-stack ops :: buffer-stack [+ ARGS] -> buffer-stack
+;;; mru-stack ops
+
+;;; :: mru-stack -> buffer
 (define (current-buffer buffer-stack)
   (mru-ref buffer-stack))
 
-(define* (buffer-ref buffer-stack #:optional (ref 0))
-  (mru-ref buffer-stack ref))
+(export buffer-ref add-buffer remove-buffer buffer-previous buffer-next buffer-set buffer-other)
 
-(define (add-buffer buffer-stack buffer)
-  (mru-add buffer-stack buffer))
+;;; :: mru-stack -> buffer
+(define buffer-ref  mru-ref)
 
-(define (remove-buffer buffer-stack buffer)
-  (mru-remove buffer-stack buffer))
+;;; :: mru-stack -> mru-stack
+(define add-buffer mru-add)
 
-(define* (buffer-previous buffer-stack #:optional (incr 1))
-  (mru-next buffer-stack incr))
+;;; :: mru-stack -> mru-stack
+(define remove-buffer mru-remove)
 
-(define* (buffer-next buffer-stack #:optional (incr 1))
-  (buffer-previous buffer-stack (- incr)))
+;;; :: mru-stack -> mru-stack
+(define buffer-previous mru-next)
 
-(define (buffer-set buffer-stack buffer)
-  ;; (emacsy-log-debug "set-buffer! to ~a" buffer)
-  (mru-set buffer-stack buffer))
+;;; :: mru-stack -> mru-stack
+(define buffer-next mru-prev)
 
+;;; :: mru-stack -> mru-stack
+(define buffer-set mru-set)
+
+;;; :: mru-stack -> mru-stack
 (define* (buffer-other buffer-stack #:optional (incr 1))
-  (current-buffer (mru-recall buffer-stack
-                              (list-ref (buffer-list buffer-stack) incr))))
+  (mru-recall buffer-stack
+              (buffer-ref buffer-stack incr)))
 
 ;;; end
+
+(define partial
+  (lambda (proc . args)
+    (lambda rest
+      (apply proc (append args rest)))))
+
+(define rpartial
+  (lambda (proc . args)
+    (lambda rest
+      (apply proc (reverse (append args rest))))))
+
+(define pam
+  (lambda (fns val)
+      "Apply a list of functions FNS to a value VAL to produce a list of
+values"
+      (if (null? fns) '()
+          (cons ((car fns) val)
+                (pam (cdr fns) val)))))
+
+(define pam!
+  (lambda (fns val)
+      "Apply a list of functions FNS to a value VAL to produce a series of effects."
+      (unless (null? fns)
+          (begin ((car fns) val)
+                (pam! (cdr fns) val)))))
 
 ;;; This is our primitive procedure for switching buffers.  It does not
 ;;; handle any user interaction.
 (define* (primitive-switch-to-buffer buffer-stack buffer #:optional (recall? #t))
+  ;; FIXME: Adding of new buffers is not satisfactory
   (emacsy-log-debug "Running exit hook for ~a" (current-buffer buffer-stack))
   (run-hook (buffer-exit-hook (current-buffer buffer-stack)))
-  (if recall?
-      (begin
-        (emacsy-log-debug "Recall buffer ~a" buffer)
-        (set-buffer! buffer))
-      (begin
-        (emacsy-log-debug "Add buffer ~a" buffer)
-        (add-buffer! buffer)))
-  (emacsy-log-debug "Running enter hook for ~a" (current-buffer buffer-stack))
-  (run-hook (buffer-enter-hook (current-buffer buffer-stack)))
-  (current-buffer buffer-stack))
+  (pam! (list (compose run-hook buffer-enter-hook)
+              (partial emacsy-log-debug "Running enter hook for ~a"))
+        (current-buffer (if (and (mru-contains? buffer-stack buffer) recall?)
+                            (begin (emacsy-log-debug "Recall buffer ~a" buffer)
+                                   (buffer-set buffer-stack buffer))
+                            (begin (emacsy-log-debug "Add buffer ~a" buffer)
+                                   (add-buffer buffer-stack buffer))))))
 
 (define switch-to-buffer primitive-switch-to-buffer)
 
