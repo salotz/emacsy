@@ -35,7 +35,7 @@
   #:use-module (oop goops)
   #:use-module (emacsy circular)
   #:use-module (emacsy util)
-  #:use-module (srfi srfi-1)
+  #:use-module ((srfi srfi-1) #:select (drop))
   #:export (<mru-stack>
             ;; accessor
             mru-list
@@ -63,13 +63,13 @@
   (format port "<mru-stack ~a>" (mru-list obj)))
 
 (define-method (mru-empty? (s <mru-stack>))
-  (null-list? (mru-list s)))
+  (null? (mru-list s)))
 
 (define-method (mru-contains? (s <mru-stack>) x)
   (list-index (lambda (y) eq? y x) (mru-list s)))
 
 (define-method (mru-add (s <mru-stack>) x)
-  (make <mru-stack> #:list (xcons (mru-list s) x)))
+  (make <mru-stack> #:list (cons x (mru-list s))))
 
 (define-method (mru-remove (s <mru-stack>) item)
   (make <mru-stack> #:list (delq1 item (mru-list s))))
