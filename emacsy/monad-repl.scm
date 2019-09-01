@@ -26,7 +26,9 @@
   #:use-module (system repl command)
   #:use-module (system base language)
   #:use-module (system base compile)
-  )
+  #:export (
+            enter-monad
+            ))
 
 ;;; monad repl from guix monad-repl
 ;;; Thanks Guix and ludovic
@@ -61,5 +63,6 @@ Run EXP through the store monad."
     (let ((new (make-repl (buffer-stack-monad-language buffer-stack))))
       (repl-option-set! new 'interp #t)
       (run-repl new))))
-
-(export enter-monad)
+;;; usage (buffer-stack (msend add-buffer (make <buffer> #:name "1"))
+;;; (msend add-buffer (make <buffer> #:name "2")))
+;; $9 = <mru-stack (#<buffer 2> #<buffer 1>)>
