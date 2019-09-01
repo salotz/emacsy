@@ -206,6 +206,12 @@ matching."
   ;; stage the expressions to be evaluated in a buffer-stack monad.
   (partial monadic (make <mru-stack>)))
 
+;;; The simplest thing may be: now 1. the user has to initialize a
+;;; (define bs (buffers)) in their application. 2. add-other! and such
+;;; methods cannot find 'bs'.
+(define (buffers)
+  (make <mru-stack>))
+
 (define (msend proc arg)
   ;; wrapper for procs entering buffer-stack monad.
   (m (rpartial proc) arg))
@@ -213,7 +219,14 @@ matching."
 ;; get a return-value from a monad.
 (define mreturn fire)
 
-(export buffer-stack msend mreturn add-buffer! remove-buffer!)
+;;; that's it, this is pretty much what i want, but this should not
+;;; evaluate it's arguments, rather scheme should not evaluate arguments
+;;; to buffer-monad-run, and let it evaluate them itself.
+(define buffer-monad-run
+  (lambda (arg)
+    (mreturn arg)))
+
+(export buffer-stack msend mreturn add-buffer! remove-buffer! buffers buffer-monad-run)
 
 ;;; now looks like:
 ;; > (mreturn
