@@ -213,7 +213,7 @@ matching."
 ;; get a return-value from a monad.
 (define mreturn fire)
 
-(export buffer-stack msend mreturn)
+(export buffer-stack msend mreturn add-buffer! remove-buffer!)
 
 ;;; now looks like:
 ;; > (mreturn
@@ -222,6 +222,14 @@ matching."
 ;;           more-stuff)
 
 ;; $11 = <mru-stack (#<buffer winner> #<buffer anon>)>
+
+;;; the old imperative api using monads
+(define (add-buffer! buffer)
+  (mreturn (buffer-stack (msend add-buffer buffer))))
+
+;;; wait a minute, this is not adding the buffer to a global state.
+(define (remove-buffer! buffer)
+  (mreturn (buffer-stack (msend remove-buffer buffer))))
 
 ;;; :: mru-stack -> list
 (define (buffer-list buffer-stack)
