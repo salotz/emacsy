@@ -33,6 +33,7 @@
 
 (define-module (emacsy mru-stack)
   #:use-module (oop goops)
+  #:use-module (emacsy circular)
   #:use-module (emacsy util)
   #:use-module (srfi srfi-1)
   #:export (<mru-stack>
@@ -54,13 +55,6 @@
 ;;; Return on Failure is an error
 (define LIST-BEGIN 0)
 (define INCR 1)
-
-(define (delq1 item lst)
-  (if (null? lst) lst
-      (let ((elt (car lst)))
-        (if (eq? item elt)
-            (cdr lst)
-            (cons elt (delq1 item (cdr lst)))))))
 
 (define-class <mru-stack> ()
   (list #:accessor mru-list #:init-keyword #:list #:init-thunk (lambda () (list))))
@@ -100,13 +94,6 @@
 
 (define-method* (mru-other (s <mru-stack>) #:optional (ref INCR))
   (mru-recall s (mru-ref s ref)))
-
-(define (circular-list->list q)
-  (define (clst->list start q)
-    (if (eq? start (car q))
-        '()
-        (cons (car q) (clst->list start (cdr q)))))
-  (cons (car q) (clst->list (car q) (cdr q))))
 
 ;;; FIXME: performance can be gained by defining (encylce! lst) -> circular-list
 (define-method* (mru-next (s <mru-stack>) #:optional (count INCR))
