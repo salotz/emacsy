@@ -46,7 +46,7 @@
 
 (define-public tract -)
 
-;;; i want to write something like (monadic (add 1) (dead 3)) etc
+;;; i want to write something like (monadic (add 1) (tract 3)) etc
 (define-public (monadic start . mthunk)
   (define (sequencer thunk start)
     (if (null? thunk) start
