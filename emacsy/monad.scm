@@ -29,39 +29,41 @@
 
 ;;; the general global var pattern, mutate the state until you have the
 ;;; thing you want. History is forgotten by mutation.
-(define-public value 0)
+(define value 0)
 
-(define-public (adder . rest)
+(define (adder . rest)
   (set! value (apply + value rest))
   value)
 
-(define-public (tractor . rest)
+(define (tractor . rest)
   (set! value (apply - value rest))
   value)
 
 ;;; do the same thing without mutation.
-(define-public cvalue 0)
+(define cvalue 0)
 
-(define-public add +)
+(define add +)
 
-(define-public tract -)
+(define tract -)
 
 ;;; i want to write something like (monadic (add 1) (tract 3)) etc
-(define-public (monadic start . mthunk)
+(define (monadic start . mthunk)
   (define (sequencer thunk start)
     (if (null? thunk) start
         (cons (car thunk)
               (sequencer (cdr thunk) start))))
   (define (seq thunks start)
     (if (null? thunks) start
-        (seq (cdr thunks) (list (append (car thunks) start)))))
+        (seq (cdr thunks)
+             (list (append (car thunks) start)))))
+  ;; optionally switch the order of arguments?
   (car (seq mthunk (list start))))
 
-(define-public numeric-monad (partial monadic 0))
+(define numeric-monad (partial monadic 0))
 
 ;;; usage: (fire (monadic (m proc1 arg1) (m proc2 arg2)))
-(define-public (fire monadic)
+(define (fire monadic)
   (eval monadic (interaction-environment)))
 
-(define-public (m proc val)
+(define(m proc val)
   (list proc val))
