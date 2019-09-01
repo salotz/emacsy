@@ -1,12 +1,17 @@
 * Emacsy dev guide
 my little experiments:
-- dna: items (avoiding using the word "object" for clarity) contain
-  information (really, procedures) to manipulate themselves.
-- imperative style is hard to comprehend, make everything functional
-  (and "nicer") as much as possible.
-- Reduce overall code.
-- woohoo! mixing of types is solved by throwing errors instead! Instead
-  of a quiet crash, now you can atleast debug it.
+- code as data; make more and more things representable as
+  data. buffer->list, hook->list, keymap->list etc. It is then trivial
+  to save buffer and everything to a file and then later resume, but
+  that's just scratching the surface of 'code as data'.
+- imperative style is hard to comprehend/maintain, make everything
+  functional (and "nicer") as much as possible. Reduce overall code. And
+  make it pretty & schemey instead of elispy.
+- Throw good errors! As much as possible all errors should be caught in
+  Emacsy and be sent to the user as 'In procedure emacsy-proc1: error'
+  instead of some 'In list-ref: found #f' etc. When in doubt about the
+  return type throw an error instead of mixing types, don't return #f or
+  '(), willy nilly.
 
 * User's voice
 A sensible advice: (don't change anything, just fix the bugs.)
