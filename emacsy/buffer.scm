@@ -24,6 +24,7 @@
   #:use-module (ice-9 optargs)
   #:use-module ((ice-9 session) #:select (procedure-arguments))
   #:use-module (oop goops)
+  #:use-module (emacsy circular)
   #:use-module (emacsy util)
   #:use-module (emacsy mru-stack)
   #:use-module (emacsy self-doc)
@@ -166,27 +167,6 @@ matching."
         (list 'buffer-from-list list->buffer)
         (list 'buffer-to-list buffer->list)))
 
-;;; hooks are from guile. unless list->hook is added to guile this
-;;; should probably go to utilities.
-(define (list->hook lst)
-  "Convert the procedure list of LST to a hook."
-  (define (adder h lst arity)
-    (if (null? lst) h
-        (let ((proc (car lst)))
-          (if (procedure? proc)
-              (if (equal? arity (car (procedure-minimum-arity proc)))
-                  (begin (add-hook! h proc #t)
-                         (adder h (cdr lst) arity))
-                  (error (format #f "In procedure list->hook: Wrong number of arguments to ~s, expected arity ~s" proc arity)))
-              (error (format #f "In procedure list->hook: Wrong type argument ~s, expecting a procedure." proc))))))
-  (if (null? lst) (make-hook)
-      (let ((proc (car lst)))
-        (if (procedure? proc)
-            (let* ((arity (car (procedure-minimum-arity proc)))
-                   (hook (make-hook arity)))
-              (adder hook lst arity))
-            (error (format #f "In procedure list->hook: Wrong type argument: ~s in list, expected a procedure." proc))))))
-
 (define (list->buffer lst)
   (make <buffer>
     #:name (car (assoc-ref lst 'buffer-name))
@@ -254,31 +234,6 @@ matching."
               (buffer-ref buffer-stack incr)))
 
 ;;; end
-
-(define partial
-  (lambda (proc . args)
-    (lambda rest
-      (apply proc (append args rest)))))
-
-(define rpartial
-  (lambda (proc . args)
-    (lambda rest
-      (apply proc (reverse (append args rest))))))
-
-(define pam
-  (lambda (fns val)
-      "Apply a list of functions FNS to a value VAL to produce a list of
-values"
-      (if (null? fns) '()
-          (cons ((car fns) val)
-                (pam (cdr fns) val)))))
-
-(define pam!
-  (lambda (fns val)
-      "Apply a list of functions FNS to a value VAL to produce a series of effects."
-      (unless (null? fns)
-          (begin ((car fns) val)
-                (pam! (cdr fns) val)))))
 
 ;;; This is our primitive procedure for switching buffers.  It does not
 ;;; handle any user interaction.
