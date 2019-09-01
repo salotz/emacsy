@@ -25,6 +25,7 @@
   #:use-module ((ice-9 session) #:select (procedure-arguments))
   #:use-module (oop goops)
   #:use-module (emacsy circular)
+  #:use-module (emacsy monad)
   #:use-module (emacsy util)
   #:use-module (emacsy mru-stack)
   #:use-module (emacsy self-doc)
@@ -196,6 +197,31 @@ matching."
 ;;; be very hard to diagnose. Do 1. Better error reporting, errors
 ;;; should originate from buffer api, not lower level procs. But before
 ;;; that 0. Finish the functional api.
+
+;;; ok, have a monadic api, looks like this: (<< (buffer-stack (>>
+;;; add-buffer (make <buffer> #:name "anon")))) 1. Clean it up, instead
+;;; of requiring 3 wrapper procs, maybe we can do with just two? 1. >>
+;;; to send and 2. << to return?
+(define buffer-stack
+  ;; stage the expressions to be evaluated in a buffer-stack monad.
+  (partial monadic (make <mru-stack>)))
+
+(define (msend proc arg)
+  ;; wrapper for procs entering buffer-stack monad.
+  (m (rpartial proc) arg))
+
+;; get a return-value from a monad.
+(define mreturn fire)
+
+(export buffer-stack msend mreturn)
+
+;;; now looks like:
+;; > (mreturn
+;;           (msend add-buffer buffer-1)
+;;           (msend add-buffer buffer-2)
+;;           more-stuff)
+
+;; $11 = <mru-stack (#<buffer winner> #<buffer anon>)>
 
 ;;; :: mru-stack -> list
 (define (buffer-list buffer-stack)
