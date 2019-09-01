@@ -18,6 +18,7 @@
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 (define-module (emacsy circular)
   #:use-module ((ice-9 binary-ports) #:select (eof-object))
+  #:use-module (ice-9 match)
   #:export (
             partial
             rpartial
@@ -89,18 +90,21 @@ values"
         (shader (reader-next in)
                 (writer (proc (reader in)) out) reader-empty? proc reader-next reader writer))))
 
+;;; thanks rain1 and weinholt
 (define (generator)
-  (let ((args '()))
-    (case-lambda
-      ;; produce
-      (() (if (null? args) (eof-object)
-              (let ((res (car args)))
-                (set! args (cdr args))
-                res)))
-      ;; consume
-      ((magic) args)
-      ((this) generator)
-      ((a) (set! args (cons a args))))))
+  (letrec ((args '())
+        (closure (case-lambda
+                   ;; produce
+                   (() (if (null? args) (eof-object)
+                           (let ((res (car args)))
+                             (set! args (cdr args))
+                             res)))
+                   ;; consume
+                   ((a) (match a
+                          ('debug args)
+                          ('self closure)
+                          (_ (set! args (cons a args))))))))
+    closure))
 
 (define curry
   (lambda (proc . args)
