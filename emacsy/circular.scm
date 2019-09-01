@@ -35,7 +35,7 @@
             cappend!
             circular-append!
             circular-append
-            hook->list
+            list->hook
             delq1
             circular-list->list
             ))
