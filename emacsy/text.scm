@@ -30,7 +30,47 @@
   #:use-module (emacsy command)
   #:use-module (emacsy klecl)
   #:use-module (emacsy mode)
-  #:use-module (emacsy buffer))
+  #:use-module (emacsy buffer)
+  #:export (
+            buffer-string
+            point
+            point-min
+            point-max
+            set-mark
+            current-column
+            line-length
+            delete-line
+            delete-word
+            gap-buffer
+            mark
+            char-after
+            char-before
+            backward-line
+            insert-char
+            ;; methods
+            buffer:re-search-forward
+            buffer:re-search-backward
+            buffer:line-length
+            buffer:current-column
+            buffer:beginning-of-line
+            buffer:end-of-line
+            buffer:set-mark
+            buffer:mark
+            <text-buffer>
+            buffer:buffer-string
+            buffer:goto-char
+            buffer:point
+            buffer:point-min
+            buffer:point-max
+            buffer:set-mark
+            buffer:mark
+            buffer:char-before
+            buffer:char-after
+            buffer:insert-string
+            buffer:insert-char
+            buffer:delete-char
+            buffer:delete-region
+            ))
 
 ;;; Commentary:
 
@@ -46,15 +86,15 @@
 ;; optional parameters and interactiveness.
 
 ;;.
-(define-public (buffer-string)
+(define (buffer-string)
   ((compose buffer:buffer-string current-buffer)))
 
 ;;.
-(define-public (point)
+(define (point)
   ((compose buffer:point current-buffer)))
 
 ;;.
-(define-public (point-min)
+(define (point-min)
   ((compose buffer:point-min current-buffer)))
 
 ;;.
@@ -62,7 +102,7 @@
   (goto-char (point-min)))
 
 ;;.
-(define-public (point-max)
+(define (point-max)
   ((compose buffer:point-max current-buffer)))
 
 ;;.
@@ -70,11 +110,11 @@
   (goto-char (point-max)))
 
 ;;.
-(define*-public (mark #:optional force)
+(define* (mark #:optional force)
   (buffer:mark (current-buffer)))
 
 ;;.
-(define-public (set-mark pos)
+(define (set-mark pos)
   (buffer:set-mark (current-buffer) pos))
 
 ;;.
@@ -95,10 +135,10 @@
     (goto-char m)))
 
 ;;.
-(define*-public (char-after #:optional (point (point)))
+(define* (char-after #:optional (point (point)))
   (buffer:char-after (current-buffer) point))
 
-(define*-public (char-before #:optional (point (point)))
+(define* (char-before #:optional (point (point)))
   (buffer:char-before (current-buffer) point))
 
 ;;.
@@ -181,7 +221,7 @@
                 (forward-line (1- n))))))))
 
 ;;.
-(define*-public (backward-line #:optional (n 1))
+(define* (backward-line #:optional (n 1))
   (unless (zero? n)
     (if (< n 0) (forward-line (- n))
         (let* ((column (current-column))
@@ -199,10 +239,10 @@
                   (goto-char (+ (point) (min (1- len) %target-column)))
                   (backward-line (1- n)))))))))
 
-(define-public (current-column)
+(define (current-column)
   (buffer:current-column (current-buffer)))
 
-(define-public (line-length)
+(define (line-length)
   (buffer:line-length (current-buffer)))
 
 (define-interactive (next-line #:optional (n 1))
@@ -212,7 +252,7 @@
   (backward-line n))
 
 ;;.
-(define-method-public (insert-char char)
+(define-method (insert-char char)
   (buffer:insert-string (current-buffer) char))
 
 ;;.
@@ -307,7 +347,7 @@
    (delete-region (if (> end start) start end) (if (> end start) end start))))
 
 ;;.
-(define-public (delete-line n)
+(define (delete-line n)
   (let ((beg (point))
         (column (current-column))
         (len (line-length)))
@@ -323,7 +363,7 @@
   (add-kill! (delete-line n)))
 
 ;;.
-(define-public (delete-word n)
+(define (delete-word n)
   (let ((beg (point)))
     (forward-word n)
     (delete-region beg (point))))
@@ -342,7 +382,7 @@
 ;; may override these, for efficiency or otherwise.
 ;;.
 
-(define-method-public (buffer:re-search-forward (buffer <buffer>) regex bound no-error? repeat)
+(define-method (buffer:re-search-forward (buffer <buffer>) regex bound no-error? repeat)
   (if (= repeat 0) (buffer:point buffer)
       (let* ((string (buffer:buffer-string buffer))
              (pt (buffer:point buffer))
@@ -354,7 +394,7 @@
                                "No match found for regex '~a' in ~s after point ~a"
                                (list regex string pt) #f))))))
 
-(define-method-public (buffer:re-search-backward (buffer <buffer>) regex bound no-error? repeat)
+(define-method (buffer:re-search-backward (buffer <buffer>) regex bound no-error? repeat)
   (if (= repeat 0) (buffer:point buffer)
       (let loop ((start-search 0) (last-match-start #f))
         (let* ((string (buffer:buffer-string buffer))
@@ -375,33 +415,33 @@
 (define newline-regex (make-regexp "\\\n"))
 
 ;;.
-(define-method-public (buffer:line-length (buffer <buffer>))
+(define-method (buffer:line-length (buffer <buffer>))
   (let ((start (1+ (or (save-excursion (re-search-backward newline-regex #f #t)) 0)))
         (end (or (save-excursion (re-search-forward newline-regex #f #t)) (point-max))))
     (- end start)))
 
 ;;.
-(define-method-public (buffer:current-column (buffer <buffer>))
+(define-method (buffer:current-column (buffer <buffer>))
   (let ((start (1+ (or (save-excursion (re-search-backward newline-regex #f #t)) 0))))
     (- (point) start)))
 
 ;;.
-(define-method-public (buffer:beginning-of-line (buffer <buffer>) n)
+(define-method (buffer:beginning-of-line (buffer <buffer>) n)
   (goto-char (- (point) (current-column))))
 
 ;;.
-(define-method-public (buffer:end-of-line (buffer <buffer>) n)
+(define-method (buffer:end-of-line (buffer <buffer>) n)
   (goto-char (+ (point) (- (line-length) (current-column) 1)))
   (when (and (eq? (point) (1- (point-max)))
              (eq? 0 (and=> (char-after (1+ (point))) char->integer)))
     (goto-char (point-max))))
 
 ;;.
-(define-method-public (buffer:set-mark (buffer <buffer>) pos)
+(define-method (buffer:set-mark (buffer <buffer>) pos)
   (message "buffer:set-mark not implemented" buffer))
 
 ;;.
-(define-method-public (buffer:mark (buffer <buffer>))
+(define-method (buffer:mark (buffer <buffer>))
   (message "buffer:mark not implemented" buffer))
 
 ;; @subsection Editing for Gap Buffer
@@ -418,61 +458,60 @@
 ;; @var{<text-buffer>} inherits from buffer and implements the simplest
 ;; text editing for the Gap Buffer.
 ;;.
-(define-class-public <text-buffer> (<buffer>)
+(define-class <text-buffer> (<buffer>)
   ;;define-class <text-buffer> (<buffer>)
   (gap-buffer #:accessor gap-buffer #:init-form (make-gap-buffer "")))
-(export gap-buffer)
 
 ;;.
-(define-method-public (buffer:buffer-string (buffer <text-buffer>))
+(define-method (buffer:buffer-string (buffer <text-buffer>))
   (gb->string (gap-buffer buffer)))
 
 ;;.
-(define-method-public (buffer:goto-char (buffer <text-buffer>) pos)
+(define-method (buffer:goto-char (buffer <text-buffer>) pos)
   (gb-goto-char (gap-buffer buffer) pos))
 
 ;;.
-(define-method-public (buffer:point (buffer <text-buffer>))
+(define-method (buffer:point (buffer <text-buffer>))
   (gb-point (gap-buffer buffer)))
 
 ;;.
-(define-method-public (buffer:point-min (buffer <text-buffer>))
+(define-method (buffer:point-min (buffer <text-buffer>))
   (gb-point-min (gap-buffer buffer)))
 
 ;;.
-(define-method-public (buffer:point-max (buffer <text-buffer>))
+(define-method (buffer:point-max (buffer <text-buffer>))
   (gb-point-max (gap-buffer buffer)))
 
 ;;.
-(define-method-public (buffer:set-mark (buffer <text-buffer>) pos)
+(define-method (buffer:set-mark (buffer <text-buffer>) pos)
   (message "buffer:set-mark not implemented"))
 
 ;;.
-(define-method-public (buffer:mark (buffer <text-buffer>))
+(define-method (buffer:mark (buffer <text-buffer>))
   (message "buffer:mark not implemented"))
 
 ;;.
-(define-method-public (buffer:char-before (buffer <text-buffer>) point)
+(define-method (buffer:char-before (buffer <text-buffer>) point)
   (gb-char-before (gap-buffer buffer) point))
 
 ;;.
-(define-method-public (buffer:char-after (buffer <text-buffer>) pos)
+(define-method (buffer:char-after (buffer <text-buffer>) pos)
   (gb-char-after (gap-buffer buffer) pos))
 
 ;;.
-(define-method-public (buffer:insert-string (buffer <text-buffer>) string)
+(define-method (buffer:insert-string (buffer <text-buffer>) string)
   (gb-insert-string! (gap-buffer buffer) string))
 
 ;;.
-(define-method-public (buffer:insert-char (buffer <text-buffer>) char)
+(define-method (buffer:insert-char (buffer <text-buffer>) char)
   (gb-insert-char! (gap-buffer buffer) char))
 
 ;;.
-(define-method-public (buffer:delete-char (buffer <text-buffer>) n)
+(define-method (buffer:delete-char (buffer <text-buffer>) n)
   (gb-delete-char! (gap-buffer buffer) n))
 
 ;;.
-(define-method-public (buffer:delete-region (buffer <text-buffer>) start end)
+(define-method (buffer:delete-region (buffer <text-buffer>) start end)
   (let* ((point (buffer:point buffer))
          (gb (gap-buffer buffer))
          (s (if (< start end) start end))
