@@ -85,114 +85,90 @@
 ;; stay very close to the Emacs interface with respect to naming,
 ;; optional parameters and interactiveness.
 
-;;.
 (define (buffer-string)
   ((compose buffer:buffer-string current-buffer)))
 
-;;.
 (define (point)
   ((compose buffer:point current-buffer)))
 
-;;.
 (define (point-min)
   ((compose buffer:point-min current-buffer)))
 
-;;.
 (define-interactive (beginning-of-buffer #:optional arg)
   (goto-char (point-min)))
 
-;;.
 (define (point-max)
   ((compose buffer:point-max current-buffer)))
 
-;;.
 (define-interactive (end-of-buffer #:optional arg)
   (goto-char (point-max)))
 
-;;.
 (define* (mark #:optional force)
   (buffer:mark (current-buffer)))
 
-;;.
 (define (set-mark pos)
   (buffer:set-mark (current-buffer) pos))
 
-;;.
 (define-interactive (set-mark-command #:optional arg)
   (if arg (goto-char (mark))
       (set-mark (point))))
 
-;;.
 (define-interactive (mark-whole-buffer)
   (goto-char (point-min))
   (set-mark (point))
   (goto-char (point-max)))
 
-;;.
 (define-interactive (exchange-point-and-mark)
   (let ((m (mark)))
     (set-mark (point))
     (goto-char m)))
 
-;;.
 (define* (char-after #:optional (point (point)))
   (buffer:char-after (current-buffer) point))
 
 (define* (char-before #:optional (point (point)))
   (buffer:char-before (current-buffer) point))
 
-;;.
 (define-interactive (goto-char #:optional (point (point)))
   (buffer:goto-char (current-buffer) point))
 
-;;.
 (define-interactive (forward-char #:optional (n 1))
   (buffer:goto-char (current-buffer) (+ (point) n)))
 
-;;.
 (define-interactive (backward-char #:optional (n 1))
   (forward-char (- n)))
 
-;;.
 (define-interactive (beginning-of-line #:optional (n 1))
   (buffer:beginning-of-line (current-buffer) n))
 
-;;.
 (define-interactive (end-of-line #:optional (n 1))
   (buffer:end-of-line (current-buffer) n))
 
-;;.
 (define-interactive (move-beginning-of-line #:optional (n 1))
   (beginning-of-line n))
 
-;;.
 (define-interactive (move-end-of-line #:optional (n 1))
   (end-of-line n))
 
-;;.
 (define-interactive (re-search-forward regex #:optional (bound #f) (no-error? #f) (repeat 1))
   (buffer:re-search-forward (current-buffer) regex bound no-error? repeat))
 
 
-;;.
 (define-interactive (re-search-backward regex #:optional (bound #f) (no-error? #f) (repeat 1))
   (buffer:re-search-backward (current-buffer) regex bound no-error? repeat))
 
 
 (define forward-word-regex (make-regexp "\\s*\\w+\\b"))
-;;.
 (define-interactive (forward-word #:optional (n 1))
   (if (< n 0) (backward-word (- n))
       (re-search-forward forward-word-regex #f #t n)))
 
 (define backward-word-regex (make-regexp "\\b\\w+\\s*"))
-;;.
 (define-interactive (backward-word #:optional (n 1))
   (if (< n 0) (forward-word (- n))
       (re-search-backward backward-word-regex #f #t n)))
 
 (define %target-column #f)
-;;.
 (define-interactive (forward-line #:optional (n 1))
   (unless (zero? n)
     (if (< n 0) (backward-line (- n))
@@ -220,7 +196,6 @@
                   (goto-char (point-max)))
                 (forward-line (1- n))))))))
 
-;;.
 (define* (backward-line #:optional (n 1))
   (unless (zero? n)
     (if (< n 0) (forward-line (- n))
@@ -251,11 +226,9 @@
 (define-interactive (previous-line #:optional (n 1))
   (backward-line n))
 
-;;.
 (define-method (insert-char char)
   (buffer:insert-string (current-buffer) char))
 
-;;.
 (define-interactive (insert #:rest args)
   (and (current-buffer)
        (if (null? args) 0
@@ -271,12 +244,10 @@
              (incr! (buffer-modified-tick (current-buffer)))
              (run-hook after-buffer-change-hook (current-buffer))))))
 
-;;.
 (define-interactive (self-insert-command #:optional (n 1))
   (and (>= n 1)
        (insert (command-char this-command-event))))
 
-;; .
 (define-variable kill-ring '("")
   "List of killed text sequences.")
 
@@ -313,7 +284,6 @@
     (forward-char n)
     (delete-region beg (point))))
 
-;;.
 (define-interactive (delete-forward-char #:optional (n 1))
   "Delete the following N characters (previous if N is negative)."
   (buffer:delete-char (current-buffer) n))
@@ -323,7 +293,6 @@
   "Alias for delete-forward-char."
   (buffer:delete-char (current-buffer) n))
 
-;;.
 (define-interactive (delete-backward-char #:optional (n 1))
   "Delete the previous N characters (following if N is negative)."
   (buffer:delete-char (current-buffer) (- n)))
@@ -333,7 +302,6 @@
   "Alias for delete-backward-char."
   (delete-backward-char n))
 
-;;.
 (define-interactive (delete-region #:optional (start (point)) (end (mark)))
   (let ((text (buffer:delete-region (current-buffer) start end)))
     (when text
@@ -341,12 +309,10 @@
       (incr! (buffer-modified-tick (current-buffer))))
     text))
 
-;;.
 (define-interactive (kill-region #:optional (start (point)) (end (mark)))
   (add-kill!
    (delete-region (if (> end start) start end) (if (> end start) end start))))
 
-;;.
 (define (delete-line n)
   (let ((beg (point))
         (column (current-column))
@@ -358,21 +324,17 @@
       (goto-char (- (point) (current-column) 1)))
     (delete-region beg (point))))
 
-;;.
 (define-interactive (kill-line #:optional (n 1))
   (add-kill! (delete-line n)))
 
-;;.
 (define (delete-word n)
   (let ((beg (point)))
     (forward-word n)
     (delete-region beg (point))))
 
-;;.
 (define-interactive (kill-word #:optional (n 1))
   (add-kill! (delete-word n)))
 
-;;.
 (define-interactive (backward-kill-word #:optional (n 1))
   (kill-word (- n)))
 
@@ -380,7 +342,6 @@
 ;;
 ;; A child of <buffer>, such as <text-buffer>, <minibuffer> or a custom UI buffer
 ;; may override these, for efficiency or otherwise.
-;;.
 
 (define-method (buffer:re-search-forward (buffer <buffer>) regex bound no-error? repeat)
   (if (= repeat 0) (buffer:point buffer)
@@ -414,38 +375,31 @@
 
 (define newline-regex (make-regexp "\\\n"))
 
-;;.
 (define-method (buffer:line-length (buffer <buffer>))
   (let ((start (1+ (or (save-excursion (re-search-backward newline-regex #f #t)) 0)))
         (end (or (save-excursion (re-search-forward newline-regex #f #t)) (point-max))))
     (- end start)))
 
-;;.
 (define-method (buffer:current-column (buffer <buffer>))
   (let ((start (1+ (or (save-excursion (re-search-backward newline-regex #f #t)) 0))))
     (- (point) start)))
 
-;;.
 (define-method (buffer:beginning-of-line (buffer <buffer>) n)
   (goto-char (- (point) (current-column))))
 
-;;.
 (define-method (buffer:end-of-line (buffer <buffer>) n)
   (goto-char (+ (point) (- (line-length) (current-column) 1)))
   (when (and (eq? (point) (1- (point-max)))
              (eq? 0 (and=> (char-after (1+ (point))) char->integer)))
     (goto-char (point-max))))
 
-;;.
 (define-method (buffer:set-mark (buffer <buffer>) pos)
   (message "buffer:set-mark not implemented" buffer))
 
-;;.
 (define-method (buffer:mark (buffer <buffer>))
   (message "buffer:mark not implemented" buffer))
 
 ;; @subsection Editing for Gap Buffer
-;;.
 
 (define (gb-char-before gb point)
   (and (> point (gb-point-min gb))
@@ -457,60 +411,46 @@
 
 ;; @var{<text-buffer>} inherits from buffer and implements the simplest
 ;; text editing for the Gap Buffer.
-;;.
 (define-class <text-buffer> (<buffer>)
   ;;define-class <text-buffer> (<buffer>)
   (gap-buffer #:accessor gap-buffer #:init-form (make-gap-buffer "")))
 
-;;.
 (define-method (buffer:buffer-string (buffer <text-buffer>))
   (gb->string (gap-buffer buffer)))
 
-;;.
 (define-method (buffer:goto-char (buffer <text-buffer>) pos)
   (gb-goto-char (gap-buffer buffer) pos))
 
-;;.
 (define-method (buffer:point (buffer <text-buffer>))
   (gb-point (gap-buffer buffer)))
 
-;;.
 (define-method (buffer:point-min (buffer <text-buffer>))
   (gb-point-min (gap-buffer buffer)))
 
-;;.
 (define-method (buffer:point-max (buffer <text-buffer>))
   (gb-point-max (gap-buffer buffer)))
 
-;;.
 (define-method (buffer:set-mark (buffer <text-buffer>) pos)
   (message "buffer:set-mark not implemented"))
 
-;;.
 (define-method (buffer:mark (buffer <text-buffer>))
   (message "buffer:mark not implemented"))
 
-;;.
 (define-method (buffer:char-before (buffer <text-buffer>) point)
   (gb-char-before (gap-buffer buffer) point))
 
-;;.
 (define-method (buffer:char-after (buffer <text-buffer>) pos)
   (gb-char-after (gap-buffer buffer) pos))
 
-;;.
 (define-method (buffer:insert-string (buffer <text-buffer>) string)
   (gb-insert-string! (gap-buffer buffer) string))
 
-;;.
 (define-method (buffer:insert-char (buffer <text-buffer>) char)
   (gb-insert-char! (gap-buffer buffer) char))
 
-;;.
 (define-method (buffer:delete-char (buffer <text-buffer>) n)
   (gb-delete-char! (gap-buffer buffer) n))
 
-;;.
 (define-method (buffer:delete-region (buffer <text-buffer>) start end)
   (let* ((point (buffer:point buffer))
          (gb (gap-buffer buffer))
