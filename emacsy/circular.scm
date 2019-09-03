@@ -39,6 +39,12 @@
             list->hook
             delq1
             circular-list->list
+            string-car
+            string-cdr
+            string-cons
+            string-take-while
+            string-drop-while
+            string-partition
             ))
 
 (define partial
@@ -124,11 +130,6 @@ values"
         (if (eq? current seen)
             seen
             (ccopy (cdr current) (cons (car current) seen))))))
-
-(define clast-pair
-  (lambda (clst)
-
-    '()))
 
 (define circular-list
   (case-lambda
@@ -217,3 +218,31 @@ values"
         (if (eq? item elt)
             (cdr lst)
             (cons elt (delq1 item (cdr lst)))))))
+
+;;; string ops
+(define (string-car str)
+  (string-take str 1))
+
+(define (string-cdr str)
+  (string-drop str 1))
+
+(define (string-cons str str1)
+  (string-append str str1))
+
+(define (string-take-while pred str)
+  (let ((one (string-car str)))
+    (if (not (pred one)) (string)
+        (string-cons one
+                     (string-take-while pred
+                                        (string-cdr str))))))
+
+(define (string-drop-while pred str)
+  (let ((one (string-car str)))
+    (if (pred one)
+        (string-drop-while pred (string-cdr str))
+        str)))
+
+(define (string-partition pred str)
+  (let ((before (string-take-while pred str)))
+    (cons before
+          (substring str (string-length before)))))
