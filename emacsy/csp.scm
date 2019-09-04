@@ -116,5 +116,34 @@
 (define-public choc-machine
   (let ((args '()))
     (define choc (list 'choc (lambda () (pk (car choc)) (list coin))))
-    (define coin (list 'coin (lambda () (pk (car coin)) (list choc))))
-    (list choc coin)))
+    (define coin (list 'coin (lambda () (pk (car coin)) (list choc toffee))))
+    (define toffee (list 'toffee (lambda () (pk (car toffee)) (list coin))))
+    (list coin)))
+
+(define-public clock
+  (let ((args '()))
+    (define tick (list 'tick (lambda () (pk (car tick)) (list tick))))
+    (list tick)))
+
+(define-public give-change
+  (let ((args '()))
+    (define in5p (list 'in5p (lambda () (pk (car in5p)) (list out2p))))
+    (define out2p (list 'out2p (lambda () (pk (car out2p)) (list out1p))))
+    (define out1p (list 'out1p (lambda () (pk (car out1p)) (list out2p*))))
+    (define out2p* (list 'out2p (lambda () (pk (car out2p*)) (list in5p))))
+    (list in5p)))
+
+(define-public mover
+  (let ((args '()))
+    ;; we need to define too many up and down states. It's not possible to define each of them.
+    (define around (list 'around (lambda () (pk (car around)) (list up around))))
+    (define up (list 'up (lambda () (pk (car up)) (list up* down))))
+    (define up* (list 'up (lambda () (pk (car up*)) (list up** down*))))
+    ;; ... and so on
+    (define down (list 'down (lambda () (pk (car down)) (list up around))))
+    (define down* (list 'down (lambda () (pk (car down*)) (list up* down))))
+    ;; ... and so on
+    (list around up)
+    ))
+
+;;; clearly hit a limitation of this language/technique
