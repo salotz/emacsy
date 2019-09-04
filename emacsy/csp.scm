@@ -53,3 +53,59 @@
       (cond
        ((eq? event 'choc) (finder 'coin))
        ((eq? event 'coin) (finder 'choc))))))
+
+;;; tony made a nice little language to make vending machines
+;;; ah, i see it's a lot more work and very little gain to implement such a thing.
+
+;;; traces
+(define-public (tracevm)
+  (letrec* ((choc (cons 'choc
+                        (lambda (event)
+                          (if (eq? event 'coin)
+                              (action! 'choc)
+                              (trace choc)))))
+            (coin (cons 'coin
+                        (lambda (event)
+                          (if (eq? event 'choc)
+                              (action! 'coin)
+                              (trace coin)))))
+            (home (cons 'home
+                        (lambda (event)
+                          (trace (find (compose (partial eq? event) car) states)))))
+            (states (list coin choc home (cons 'debug trace)))
+            (trace (let ((events '()))
+                     (lambda (state)
+                       (if (eq? (car state) 'debug) events
+                           (begin (set! events (cons (car state) events))
+                             (cdr state))))))
+            (action! (lambda (e)
+                       "give choc and reset to original state."
+                       (begin (pk "take a choc!") (trace (cons e (cdr home)))))))
+    (cdr home)))
+;;; the above tracevm is not satisfactory, i am setting traces manually.
+
+;;; it appears that not having tony's small language for defining
+;;; vending machines is too much work.
+(define-public (uvm e)
+  (define states '(s0 s1 s2))
+  (let ((res (find (partial eq? e) states)))
+    (if res
+        res
+        'not-found)))
+
+(define-public (make-vm states)
+  (let ((states states))
+    (lambda (e)
+      (let ((state (find (compose (partial eq? e) car) states)))
+        (if state
+            (make-vm ((cadr state)))
+            'not-found)))))
+
+(define-public mvm-states
+  (let ((args '()))
+    (define s0 (list 's0 (lambda () (pk "s0") (list s1))))
+    (define s1 (list 's1 (lambda () (pk "s1") (list s2))))
+    (define s2 (list 's2 (lambda () (pk "s2") (list s0))))
+    (list s0 s1 s2)))
+
+;;; usage (define my-vm (make-vm mvm-states))
