@@ -99,8 +99,9 @@
       (let ((state (find (compose (partial eq? e) car) states)))
         (if state
             (make-vm ((cadr state)))
-            'not-found)))))
+            'STOP)))))
 
+;;; a sample state machine has these kind of states
 (define-public mvm-states
   (let ((args '()))
     (define s0 (list 's0 (lambda () (pk (car s0)) (list s1))))
@@ -111,3 +112,9 @@
 ;;; usage (define my-vm (make-vm mvm-states))
 ;;; states ::= list of state
 ;;; state ::= pair of symbol and null arity proc that produces a state
+
+(define-public choc-machine
+  (let ((args '()))
+    (define choc (list 'choc (lambda () (pk (car choc)) (list coin))))
+    (define coin (list 'coin (lambda () (pk (car coin)) (list choc))))
+    (list choc coin)))
