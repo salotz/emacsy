@@ -103,9 +103,11 @@
 
 (define-public mvm-states
   (let ((args '()))
-    (define s0 (list 's0 (lambda () (pk "s0") (list s1))))
-    (define s1 (list 's1 (lambda () (pk "s1") (list s2))))
-    (define s2 (list 's2 (lambda () (pk "s2") (list s0))))
+    (define s0 (list 's0 (lambda () (pk (car s0)) (list s1))))
+    (define s1 (list 's1 (lambda () (pk (car s1)) (list s2))))
+    (define s2 (list 's2 (lambda () (pk (car s2)) (list s0))))
     (list s0 s1 s2)))
 
 ;;; usage (define my-vm (make-vm mvm-states))
+;;; states ::= list of state
+;;; state ::= pair of symbol and null arity proc that produces a state
