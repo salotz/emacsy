@@ -41,6 +41,7 @@
             circular-list->list
             string-car
             string-cdr
+            string-car+cdr
             string-cons
             string-take-while
             string-drop-while
@@ -225,6 +226,9 @@ values"
 
 (define (string-cdr str)
   (string-drop str 1))
+
+(define (string-car+cdr str)
+  (cons (string-car str) (string-cdr str)))
 
 (define (string-cons str str1)
   (string-append str str1))
