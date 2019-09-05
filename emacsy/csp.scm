@@ -95,10 +95,12 @@
 
 (define-public (make-vm states)
   (let ((states states))
-    (lambda (e)
+    (lambda (e . rest)
       (let ((state (find (compose (partial eq? e) car) states)))
         (if state
-            (make-vm ((cadr state)))
+            (make-vm (if (null? rest)
+                         ((cadr state))
+                         (apply (cadr state) rest)))
             'STOP)))))
 
 ;;; a sample state machine has these kind of states
@@ -145,5 +147,12 @@
     ;; ... and so on
     (list around up)
     ))
+
+(define-public printer
+  (let ((args '()))
+    (define s0 (list 's0 (lambda (x) (pk (car s0)) (pk x) (list s1))))
+    (define s1 (list 's1 (lambda (x) (pk (car s1)) (pk x) (list s2))))
+    (define s2 (list 's2 (lambda (x) (pk (car s2)) (pk x) (list s0))))
+    (list s0 s1 s2)))
 
 ;;; clearly hit a limitation of this language/technique
