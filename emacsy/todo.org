@@ -25,3 +25,6 @@ A sensible advice: (don't change anything, just fix the bugs.)
         (* (car rest) (mul (cdr rest)))
         (error "In proc mul: please provide valid numbers")))
 > (mul 2 "h") -> ERROR: In procedure scm-error: In proc mul: please provide valid numbers
+* Stalled/blockers
+- find a functional/schemey alternative to 'global variables', aka
+  buffer-stack the main one.
