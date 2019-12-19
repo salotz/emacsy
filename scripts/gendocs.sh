@@ -2,10 +2,11 @@
 # gendocs.sh -- generate a GNU manual in many formats.  This script is
 #   mentioned in maintain.texi.  See the help message below for usage details.
 
-scriptversion=2013-02-03.15
+scriptversion=2019-12-19.17
 
 # Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013
 # Free Software Foundation, Inc.
+# Copyright (C) 2019 by Amar M. Singh
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -279,21 +280,21 @@ info_tgz_size=`calcsize "$outdir/$PACKAGE.info.tar.gz"`
 # do not mv the info files, there's no point in having them available
 # separately on the web.
 
-cmd="$SETLANG $TEXI2DVI $dirargs \"$srcfile\""
-printf "\nGenerating dvi... ($cmd)\n"
-eval "$cmd"
+# cmd="$SETLANG $TEXI2DVI $dirargs \"$srcfile\""
+# printf "\nGenerating dvi... ($cmd)\n"
+# eval "$cmd"
 # compress/finish dvi:
-gzip -f -9 $PACKAGE.dvi
-dvi_gz_size=`calcsize $PACKAGE.dvi.gz`
-mv $PACKAGE.dvi.gz "$outdir/"
-ls -l "$outdir/$PACKAGE.dvi.gz"
+# gzip -f -9 $PACKAGE.dvi
+# dvi_gz_size=`calcsize $PACKAGE.dvi.gz`
+# mv $PACKAGE.dvi.gz "$outdir/"
+# ls -l "$outdir/$PACKAGE.dvi.gz"
 
-cmd="$SETLANG $TEXI2DVI --pdf $dirargs \"$srcfile\""
-printf "\nGenerating pdf... ($cmd)\n"
-eval "$cmd"
-pdf_size=`calcsize $PACKAGE.pdf`
-mv $PACKAGE.pdf "$outdir/"
-ls -l "$outdir/$PACKAGE.pdf"
+# cmd="$SETLANG $TEXI2DVI --pdf $dirargs \"$srcfile\""
+# printf "\nGenerating pdf... ($cmd)\n"
+# eval "$cmd"
+# pdf_size=`calcsize $PACKAGE.pdf`
+# mv $PACKAGE.pdf "$outdir/"
+# ls -l "$outdir/$PACKAGE.pdf"
 
 if $generate_ascii; then
   opt="-o $PACKAGE.txt --no-split --no-headers $commonarg"
