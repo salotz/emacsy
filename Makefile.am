@@ -175,6 +175,8 @@ endif
 TEXI2PDF_FLAGS = -I doc
 info_TEXINFOS = doc/emacsy.texi
 
+AM_MAKEINFOHTMLFLAGS = --css-include=doc/extra/reset.css --css-include=doc/extra/style.css --css-include=doc/extra/manual.css --no-split
+
 emacsy_TEXINFOS =				\
  doc/api.texi					\
  doc/hello-emacsy.texi				\
