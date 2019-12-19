@@ -2,7 +2,7 @@
 # gendocs.sh -- generate a GNU manual in many formats.  This script is
 #   mentioned in maintain.texi.  See the help message below for usage details.
 
-scriptversion=2019-12-19.17
+scriptversion=2019-12-19.18
 
 # Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013
 # Free Software Foundation, Inc.
@@ -291,10 +291,10 @@ info_tgz_size=`calcsize "$outdir/$PACKAGE.info.tar.gz"`
 
 # cmd="$SETLANG $TEXI2DVI --pdf $dirargs \"$srcfile\""
 # printf "\nGenerating pdf... ($cmd)\n"
-# eval "$cmd"
-# pdf_size=`calcsize $PACKAGE.pdf`
-# mv $PACKAGE.pdf "$outdir/"
-# ls -l "$outdir/$PACKAGE.pdf"
+eval "make -C . pdf"
+pdf_size=`calcsize doc/$PACKAGE.pdf`
+mv doc/$PACKAGE.pdf "$outdir/"
+ls -l "$outdir/$PACKAGE.pdf"
 
 if $generate_ascii; then
   opt="-o $PACKAGE.txt --no-split --no-headers $commonarg"
