@@ -175,7 +175,7 @@ endif
 TEXI2PDF_FLAGS = -I doc
 info_TEXINFOS = doc/emacsy.texi
 
-AM_MAKEINFOHTMLFLAGS = --css-include=doc/extra/reset.css --css-include=doc/extra/style.css --css-include=doc/extra/manual.css --no-split
+AM_MAKEINFOHTMLFLAGS= --css-include=doc/extra/reset.css --css-include=doc/extra/style.css --css-include=doc/extra/manual.css
 
 emacsy_TEXINFOS =				\
  doc/api.texi					\
@@ -332,3 +332,7 @@ gen-announce:
 	    --url-directory=http://download.savannah.nongnu.org/releases/emacsy\
 	    --news=NEWS\
             > doc/announce/ANNOUNCE-$(PACKAGE_VERSION)-
+
+.PHONY: manual
+manual:
+	GENDOCS_TEMPLATE_DIR=doc/extra ./scripts/gendocs.sh --email guile-users@gnu.org -s doc/emacsy.texi -I ./doc/ --html '$(AM_MAKEINFOHTMLFLAGS)'
