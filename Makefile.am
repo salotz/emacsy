@@ -333,6 +333,11 @@ gen-announce:
 	    --news=NEWS\
             > doc/announce/ANNOUNCE-$(PACKAGE_VERSION)-
 
+
+SUPPORT_EMAIL=guile-users@nongnu.org
+
+MANUAL_TITLE=Emacsy Reference Manual
+
 .PHONY: manual
 manual:
-	GENDOCS_TEMPLATE_DIR=doc/extra ./scripts/gendocs.sh --email guile-users@gnu.org -s doc/emacsy.texi -I ./doc/ --html '$(AM_MAKEINFOHTMLFLAGS)'
+	GENDOCS_TEMPLATE_DIR=doc/extra ./scripts/gendocs.sh --email $(SUPPORT_EMAIL) -s $(info_TEXINFOS) '$(MANUAL_TITLE)' -I ./doc/ --html '$(AM_MAKEINFOHTMLFLAGS)'
